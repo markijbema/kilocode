@@ -276,6 +276,7 @@ const ApiOptions = ({
 			apiConfiguration.requestyModelId,
 			apiConfiguration.litellmModelId,
 			apiConfiguration.kilocodeModel,
+			apiConfiguration.cerebrasModelId,
 		],
 	)
 

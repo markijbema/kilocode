@@ -1,6 +1,6 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import Cerebras from "@cerebras/cerebras_cloud_sdk"
-import { withRetry } from "../retry"
+import { withRetry } from "../../api/retry"
 import { ApiHandlerOptions, CerebrasModelId, cerebrasDefaultModelId, cerebrasModels } from "../../shared/api"
 import { ModelInfo } from "@roo-code/types"
 import { ApiHandler } from "../index"
@@ -66,83 +66,79 @@ export class CerebrasHandler implements ApiHandler {
 			}
 		}
 
-		try {
-			const stream = await this.client.chat.completions.create({
-				model: this.getModel().id,
-				messages: cerebrasMessages,
-				temperature: 0,
-				stream: true,
-			})
+		const stream = await this.client.chat.completions.create({
+			model: this.getModel().id,
+			messages: cerebrasMessages,
+			temperature: 0,
+			stream: true,
+		})
 
-			// Handle streaming response
-			let reasoning: string | null = null // Track reasoning content for models that support thinking
-			const modelId = this.getModel().id
-			const isReasoningModel = modelId.includes("qwen") || modelId.includes("deepseek-r1-distill")
+		// Handle streaming response
+		let reasoning: string | null = null // Track reasoning content for models that support thinking
+		const modelId = this.getModel().id
+		const isReasoningModel = modelId.includes("qwen") || modelId.includes("deepseek-r1-distill")
 
-			for await (const chunk of stream as any) {
-				// Type assertion for the streaming chunk
-				const streamChunk = chunk as any
+		for await (const chunk of stream as any) {
+			// Type assertion for the streaming chunk
+			const streamChunk = chunk as any
 
-				if (streamChunk.choices?.[0]?.delta?.content) {
-					const content = streamChunk.choices[0].delta.content
+			if (streamChunk.choices?.[0]?.delta?.content) {
+				const content = streamChunk.choices[0].delta.content
 
-					// Handle reasoning models (Qwen and DeepSeek R1 Distill) that use <think> tags
-					if (isReasoningModel) {
-						// Check if we're entering or continuing reasoning mode
-						if (reasoning || content.includes("<think>")) {
-							reasoning = (reasoning || "") + content
+				// Handle reasoning models (Qwen and DeepSeek R1 Distill) that use <think> tags
+				if (isReasoningModel) {
+					// Check if we're entering or continuing reasoning mode
+					if (reasoning || content.includes("<think>")) {
+						reasoning = (reasoning || "") + content
 
-							// Clean the content by removing think tags for display
-							let cleanContent = content.replace(/<think>/g, "").replace(/<\/think>/g, "")
+						// Clean the content by removing think tags for display
+						let cleanContent = content.replace(/<think>/g, "").replace(/<\/think>/g, "")
 
-							// Only yield reasoning content if there's actual content after cleaning
-							if (cleanContent.trim()) {
-								yield {
-									type: "reasoning",
-									text: cleanContent,
-								}
-							}
-
-							// Check if reasoning is complete
-							if (reasoning.includes("</think>")) {
-								reasoning = null
-							}
-						} else {
-							// Regular content outside of thinking tags
+						// Only yield reasoning content if there's actual content after cleaning
+						if (cleanContent.trim()) {
 							yield {
-								type: "text",
-								text: content,
+								type: "reasoning",
+								text: cleanContent,
 							}
 						}
+
+						// Check if reasoning is complete
+						if (reasoning.includes("</think>")) {
+							reasoning = null
+						}
 					} else {
-						// Non-reasoning models - just yield text content
+						// Regular content outside of thinking tags
 						yield {
 							type: "text",
 							text: content,
 						}
 					}
-				}
-
-				// Handle usage information from Cerebras API
-				// Usage is typically only available in the final chunk
-				if (streamChunk.usage) {
-					const totalCost = this.calculateCost({
-						inputTokens: streamChunk.usage.prompt_tokens || 0,
-						outputTokens: streamChunk.usage.completion_tokens || 0,
-					})
-
+				} else {
+					// Non-reasoning models - just yield text content
 					yield {
-						type: "usage",
-						inputTokens: streamChunk.usage.prompt_tokens || 0,
-						outputTokens: streamChunk.usage.completion_tokens || 0,
-						cacheReadTokens: 0,
-						cacheWriteTokens: 0,
-						totalCost,
+						type: "text",
+						text: content,
 					}
 				}
 			}
-		} catch (error) {
-			throw error
+
+			// Handle usage information from Cerebras API
+			// Usage is typically only available in the final chunk
+			if (streamChunk.usage) {
+				const totalCost = this.calculateCost({
+					inputTokens: streamChunk.usage.prompt_tokens || 0,
+					outputTokens: streamChunk.usage.completion_tokens || 0,
+				})
+
+				yield {
+					type: "usage",
+					inputTokens: streamChunk.usage.prompt_tokens || 0,
+					outputTokens: streamChunk.usage.completion_tokens || 0,
+					cacheReadTokens: 0,
+					cacheWriteTokens: 0,
+					totalCost,
+				}
+			}
 		}
 	}
 
