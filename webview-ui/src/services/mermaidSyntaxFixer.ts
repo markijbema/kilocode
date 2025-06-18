@@ -1,4 +1,5 @@
 import { vscode } from "@src/utils/vscode"
+import mermaid from "mermaid"
 
 export interface MermaidFixResult {
 	success: boolean
@@ -10,6 +11,82 @@ export interface MermaidFixResult {
 export interface MermaidValidationResult {
 	isValid: boolean
 	error?: string
+}
+
+export const MERMAID_THEME = {
+	background: "#1e1e1e", // VS Code dark theme background
+	textColor: "#ffffff", // Main text color
+	mainBkg: "#2d2d2d", // Background for nodes
+	nodeBorder: "#888888", // Border color for nodes
+	lineColor: "#cccccc", // Lines connecting nodes
+	primaryColor: "#3c3c3c", // Primary color for highlights
+	primaryTextColor: "#ffffff", // Text in primary colored elements
+	primaryBorderColor: "#888888",
+	secondaryColor: "#2d2d2d", // Secondary color for alternate elements
+	tertiaryColor: "#454545", // Third color for special elements
+
+	// Class diagram specific
+	classText: "#ffffff",
+
+	// State diagram specific
+	labelColor: "#ffffff",
+
+	// Sequence diagram specific
+	actorLineColor: "#cccccc",
+	actorBkg: "#2d2d2d",
+	actorBorder: "#888888",
+	actorTextColor: "#ffffff",
+
+	// Flow diagram specific
+	fillType0: "#2d2d2d",
+	fillType1: "#3c3c3c",
+	fillType2: "#454545",
+}
+
+/**
+ * Initializes Mermaid with a consistent theme and configuration.
+ * This should be called once at application startup or when the theme changes.
+ */
+export function initializeMermaid() {
+	mermaid.initialize({
+		startOnLoad: false,
+		securityLevel: "loose",
+		theme: "dark",
+		themeVariables: {
+			...MERMAID_THEME,
+			fontSize: "16px",
+			fontFamily: "var(--vscode-font-family, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif)",
+
+			// Additional styling
+			noteTextColor: "#ffffff",
+			noteBkgColor: "#454545",
+			noteBorderColor: "#888888",
+
+			// Improve contrast for special elements
+			critBorderColor: "#ff9580",
+			critBkgColor: "#803d36",
+
+			// Task diagram specific
+			taskTextColor: "#ffffff",
+			taskTextOutsideColor: "#ffffff",
+			taskTextLightColor: "#ffffff",
+
+			// Numbers/sections
+			sectionBkgColor: "#2d2d2d",
+			sectionBkgColor2: "#3c3c3c",
+
+			// Alt sections in sequence diagrams
+			altBackground: "#2d2d2d",
+
+			// Links
+			linkColor: "#6cb6ff",
+
+			// Borders and lines
+			compositeBackground: "#2d2d2d",
+			compositeBorder: "#888888",
+			titleColor: "#ffffff",
+		},
+	})
 }
 
 /**
