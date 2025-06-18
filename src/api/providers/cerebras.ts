@@ -1,6 +1,5 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import Cerebras from "@cerebras/cerebras_cloud_sdk"
-import { withRetry } from "../../api/retry"
 import { ApiHandlerOptions, CerebrasModelId, cerebrasDefaultModelId, cerebrasModels } from "../../shared/api"
 import { ModelInfo } from "@roo-code/types"
 import { ApiHandler } from "../index"
@@ -27,7 +26,6 @@ export class CerebrasHandler implements ApiHandler {
 		})
 	}
 
-	@withRetry()
 	async *createMessage(systemPrompt: string, messages: Anthropic.Messages.MessageParam[]): ApiStream {
 		// Convert Anthropic messages to Cerebras format
 		const cerebrasMessages: Array<{
