@@ -5,7 +5,7 @@ import NodeCache from "node-cache"
 
 import { ContextProxy } from "../../../core/config/ContextProxy"
 import { getCacheDirectoryPath } from "../../../utils/storage"
-import { RouterName, ModelRecord } from "../../../shared/api"
+import { RouterName, ModelRecord, cerebrasModels } from "../../../shared/api"
 import { fileExistsAtPath } from "../../../utils/fs"
 
 import { getOpenRouterModels } from "./openrouter"
@@ -87,6 +87,9 @@ export const getModels = async (options: GetModelsOptions): Promise<ModelRecord>
 				})
 				break
 			// kilocode_change end
+			case "cerebras":
+				models = cerebrasModels
+				break
 			default: {
 				// Ensures router is exhaustively checked if RouterName is a strict union
 				const exhaustiveCheck: never = provider

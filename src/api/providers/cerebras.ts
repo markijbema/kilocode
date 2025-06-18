@@ -1,9 +1,11 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import Cerebras from "@cerebras/cerebras_cloud_sdk"
 import { withRetry } from "../retry"
-import { ApiHandlerOptions, ModelInfo, CerebrasModelId, cerebrasDefaultModelId, cerebrasModels } from "@shared/api"
+import { ApiHandlerOptions, CerebrasModelId, cerebrasDefaultModelId, cerebrasModels } from "../../shared/api"
+import { ModelInfo } from "@roo-code/types"
 import { ApiHandler } from "../index"
-import { ApiStream } from "@api/transform/stream"
+import { ApiStream } from "../transform/stream"
+import { countTokens } from "../../utils/countTokens"
 
 export class CerebrasHandler implements ApiHandler {
 	private options: ApiHandlerOptions
@@ -97,7 +99,7 @@ export class CerebrasHandler implements ApiHandler {
 							if (cleanContent.trim()) {
 								yield {
 									type: "reasoning",
-									reasoning: cleanContent,
+									text: cleanContent,
 								}
 							}
 
@@ -165,5 +167,13 @@ export class CerebrasHandler implements ApiHandler {
 		const outputCost = (outputPrice / 1_000_000) * outputTokens
 
 		return inputCost + outputCost
+	}
+
+	async countTokens(content: Anthropic.Messages.ContentBlockParam[]): Promise<number> {
+		if (content.length === 0) {
+			return 0
+		}
+
+		return countTokens(content, { useWorker: true })
 	}
 }

@@ -31,6 +31,7 @@ export const providerNames = [
 	"litellm",
 	"fireworks", // kilocode_change
 	"kilocode", // kilocode_change
+	"cerebras",
 ] as const
 
 export const providerNamesSchema = z.enum(providerNames)
@@ -223,6 +224,11 @@ const fireworksSchema = baseProviderSettingsSchema.extend({
 })
 // kilocode_change end
 
+const cerebrasSchema = baseProviderSettingsSchema.extend({
+	cerebrasApiKey: z.string().optional(),
+	cerebrasModelId: z.string().optional(),
+})
+
 const defaultSchema = z.object({
 	apiProvider: z.undefined(),
 })
@@ -251,6 +257,7 @@ export const providerSettingsSchemaDiscriminated = z.discriminatedUnion("apiProv
 	litellmSchema.merge(z.object({ apiProvider: z.literal("litellm") })),
 	kilocodeSchema.merge(z.object({ apiProvider: z.literal("kilocode") })), // kilocode_change
 	fireworksSchema.merge(z.object({ apiProvider: z.literal("fireworks") })), // kilocode_change
+	cerebrasSchema.merge(z.object({ apiProvider: z.literal("cerebras") })),
 	defaultSchema,
 ])
 
@@ -280,6 +287,7 @@ export const providerSettingsSchema = z.object({
 	...codebaseIndexProviderSchema.shape,
 	...kilocodeSchema.shape, // kilocode_change
 	...fireworksSchema.shape, // kilocode_change
+	...cerebrasSchema.shape,
 })
 
 export type ProviderSettings = z.infer<typeof providerSettingsSchema>
@@ -296,6 +304,7 @@ export const MODEL_ID_KEYS: Partial<keyof ProviderSettings>[] = [
 	"unboundModelId",
 	"requestyModelId",
 	"litellmModelId",
+	"cerebrasModelId",
 ]
 
 export const getModelId = (settings: ProviderSettings): string | undefined => {
