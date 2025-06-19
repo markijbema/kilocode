@@ -306,7 +306,7 @@ export const MODEL_ID_KEYS: Partial<keyof ProviderSettings>[] = [
 	"unboundModelId",
 	"requestyModelId",
 	"litellmModelId",
-	"cerebrasModelId",
+	"cerebrasModelId", // kilocode_change
 ]
 
 export const getModelId = (settings: ProviderSettings): string | undefined => {

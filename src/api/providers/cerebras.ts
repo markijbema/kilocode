@@ -1,4 +1,3 @@
-// kilocode_change start
 import { Anthropic } from "@anthropic-ai/sdk"
 import Cerebras from "@cerebras/cerebras_cloud_sdk"
 import { ApiHandlerOptions, CerebrasModelId, cerebrasDefaultModelId, cerebrasModels } from "../../shared/api"
@@ -172,4 +171,3 @@ export class CerebrasHandler implements ApiHandler {
 		return countTokens(content, { useWorker: true })
 	}
 }
-// kilocode_change end
