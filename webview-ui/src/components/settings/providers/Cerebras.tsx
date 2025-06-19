@@ -35,7 +35,7 @@ export const Cerebras = ({ apiConfiguration, setApiConfigurationField }: Cerebra
 					marginTop: 3,
 					color: "var(--vscode-descriptionForeground)",
 				}}>
-				{t("settings:providers.apiKeyStorageInfo")}
+				{t("settings:providers.apiKeyStorageNotice")}
 				{!apiConfiguration?.cerebrasApiKey && (
 					<>
 						<br />

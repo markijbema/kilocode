@@ -262,7 +262,7 @@ const ApiOptions = ({
 				// kilocode_change start
 				case "cerebras":
 					if (!apiConfiguration.cerebrasModelId) {
-						setApiConfigurationField("cerebrasModelId", "cerebras/Cerebras-GPT-13B")
+						setApiConfigurationField("cerebrasModelId", "cerebras/llama3.1-8b")
 					}
 					break
 				// kilocode_change end

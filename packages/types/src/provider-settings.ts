@@ -222,9 +222,7 @@ const fireworksSchema = baseProviderSettingsSchema.extend({
 	fireworksModelId: z.string().optional(),
 	fireworksApiKey: z.string().optional(),
 })
-// kilocode_change end
 
-// kilocode_change start
 const cerebrasSchema = baseProviderSettingsSchema.extend({
 	cerebrasApiKey: z.string().optional(),
 	cerebrasModelId: z.string().optional(),
