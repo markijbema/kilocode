@@ -86,10 +86,10 @@ export const getModels = async (options: GetModelsOptions): Promise<ModelRecord>
 					headers: { Authorization: `Bearer ${options.kilocodeToken}` },
 				})
 				break
-			// kilocode_change end
 			case "cerebras":
 				models = cerebrasModels
 				break
+			// kilocode_change end
 			default: {
 				// Ensures router is exhaustively checked if RouterName is a strict union
 				const exhaustiveCheck: never = provider
