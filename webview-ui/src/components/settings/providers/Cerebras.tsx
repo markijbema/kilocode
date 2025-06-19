@@ -1,3 +1,4 @@
+// kilocode_change start
 import React from "react"
 import { VSCodeTextField, VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import { type ProviderSettings } from "@roo-code/types"
@@ -53,3 +54,4 @@ export const Cerebras = ({ apiConfiguration, setApiConfigurationField }: Cerebra
 		</div>
 	)
 }
+// kilocode_change end

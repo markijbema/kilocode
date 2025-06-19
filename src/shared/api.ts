@@ -51,6 +51,7 @@ export type FireworksModelId = keyof typeof fireworksModels
 export const fireworksDefaultModelId: FireworksModelId = "accounts/fireworks/models/llama4-maverick-instruct-basic"
 // kilocode_change end
 
+// kilocode_change start
 // Cerebras
 // https://www.cerebras.net/
 export const cerebrasModels = {
@@ -66,6 +67,7 @@ export const cerebrasModels = {
 
 export type CerebrasModelId = keyof typeof cerebrasModels
 export const cerebrasDefaultModelId: CerebrasModelId = "cerebras/Cerebras-GPT-13B"
+// kilocode_change end
 
 // RouterName
 
@@ -146,4 +148,4 @@ export type GetModelsOptions =
 	| { provider: "unbound"; apiKey?: string }
 	| { provider: "litellm"; apiKey: string; baseUrl: string }
 	| { provider: "kilocode-openrouter"; kilocodeToken?: string } // kilocode_change
-	| { provider: "cerebras"; cerebrasApiKey?: string }
+	| { provider: "cerebras"; cerebrasApiKey?: string } // kilocode_change
