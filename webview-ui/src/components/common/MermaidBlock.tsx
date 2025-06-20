@@ -100,8 +100,6 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 	const { showCopyFeedback, copyWithFeedback } = useCopyToClipboard()
 	const { t } = useAppTranslation()
 
-	// Initialize mermaid with our theme
-
 	// 1) Whenever `code` changes, mark that we need to re-render a new chart
 	useEffect(() => {
 		setIsLoading(true)
