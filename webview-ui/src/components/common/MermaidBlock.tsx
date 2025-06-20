@@ -9,7 +9,11 @@ import { MermaidSyntaxFixer, initializeMermaid } from "@src/services/mermaidSynt
 import CodeBlock from "./CodeBlock"
 import { MermaidButton } from "@/components/common/MermaidButton"
 
-export const MERMAID_THEME = {
+// Removed previous attempts at static imports for individual diagram types
+// as the paths were incorrect for Mermaid v11.4.1 and caused errors.
+// The primary strategy will now rely on Vite's bundling configuration.
+
+const MERMAID_THEME = {
 	background: "#1e1e1e", // VS Code dark theme background
 	textColor: "#ffffff", // Main text color
 	mainBkg: "#2d2d2d", // Background for nodes
