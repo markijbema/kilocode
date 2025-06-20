@@ -83,6 +83,7 @@ mermaid.initialize({
 		titleColor: "#ffffff",
 	},
 })
+
 interface MermaidBlockProps {
 	code: string
 }
