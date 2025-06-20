@@ -13,40 +13,43 @@ import { MermaidButton } from "@/components/common/MermaidButton"
 // as the paths were incorrect for Mermaid v11.4.1 and caused errors.
 // The primary strategy will now rely on Vite's bundling configuration.
 
+const MERMAID_THEME = {
+	background: "#1e1e1e", // VS Code dark theme background
+	textColor: "#ffffff", // Main text color
+	mainBkg: "#2d2d2d", // Background for nodes
+	nodeBorder: "#888888", // Border color for nodes
+	lineColor: "#cccccc", // Lines connecting nodes
+	primaryColor: "#3c3c3c", // Primary color for highlights
+	primaryTextColor: "#ffffff", // Text in primary colored elements
+	primaryBorderColor: "#888888",
+	secondaryColor: "#2d2d2d", // Secondary color for alternate elements
+	tertiaryColor: "#454545", // Third color for special elements
+
+	// Class diagram specific
+	classText: "#ffffff",
+
+	// State diagram specific
+	labelColor: "#ffffff",
+
+	// Sequence diagram specific
+	actorLineColor: "#cccccc",
+	actorBkg: "#2d2d2d",
+	actorBorder: "#888888",
+	actorTextColor: "#ffffff",
+
+	// Flow diagram specific
+	fillType0: "#2d2d2d",
+	fillType1: "#3c3c3c",
+	fillType2: "#454545",
+}
+
 // Initialize mermaid with our theme
 mermaid.initialize({
 	startOnLoad: false,
 	securityLevel: "loose",
 	theme: "dark",
 	themeVariables: {
-		background: "#1e1e1e", // VS Code dark theme background
-		textColor: "#ffffff", // Main text color
-		mainBkg: "#2d2d2d", // Background for nodes
-		nodeBorder: "#888888", // Border color for nodes
-		lineColor: "#cccccc", // Lines connecting nodes
-		primaryColor: "#3c3c3c", // Primary color for highlights
-		primaryTextColor: "#ffffff", // Text in primary colored elements
-		primaryBorderColor: "#888888",
-		secondaryColor: "#2d2d2d", // Secondary color for alternate elements
-		tertiaryColor: "#454545", // Third color for special elements
-
-		// Class diagram specific
-		classText: "#ffffff",
-
-		// State diagram specific
-		labelColor: "#ffffff",
-
-		// Sequence diagram specific
-		actorLineColor: "#cccccc",
-		actorBkg: "#2d2d2d",
-		actorBorder: "#888888",
-		actorTextColor: "#ffffff",
-
-		// Flow diagram specific
-		fillType0: "#2d2d2d",
-		fillType1: "#3c3c3c",
-		fillType2: "#454545",
-
+		...MERMAID_THEME,
 		fontSize: "16px",
 		fontFamily: "var(--vscode-font-family, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif)",
 
@@ -80,37 +83,6 @@ mermaid.initialize({
 		titleColor: "#ffffff",
 	},
 })
-
-const MERMAID_THEME = {
-	background: "#1e1e1e", // VS Code dark theme background
-	textColor: "#ffffff", // Main text color
-	mainBkg: "#2d2d2d", // Background for nodes
-	nodeBorder: "#888888", // Border color for nodes
-	lineColor: "#cccccc", // Lines connecting nodes
-	primaryColor: "#3c3c3c", // Primary color for highlights
-	primaryTextColor: "#ffffff", // Text in primary colored elements
-	primaryBorderColor: "#888888",
-	secondaryColor: "#2d2d2d", // Secondary color for alternate elements
-	tertiaryColor: "#454545", // Third color for special elements
-
-	// Class diagram specific
-	classText: "#ffffff",
-
-	// State diagram specific
-	labelColor: "#ffffff",
-
-	// Sequence diagram specific
-	actorLineColor: "#cccccc",
-	actorBkg: "#2d2d2d",
-	actorBorder: "#888888",
-	actorTextColor: "#ffffff",
-
-	// Flow diagram specific
-	fillType0: "#2d2d2d",
-	fillType1: "#3c3c3c",
-	fillType2: "#454545",
-}
-
 interface MermaidBlockProps {
 	code: string
 }
