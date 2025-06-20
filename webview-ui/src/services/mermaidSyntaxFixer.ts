@@ -13,47 +13,40 @@ export interface MermaidValidationResult {
 	error?: string
 }
 
-export const MERMAID_THEME = {
-	background: "#1e1e1e", // VS Code dark theme background
-	textColor: "#ffffff", // Main text color
-	mainBkg: "#2d2d2d", // Background for nodes
-	nodeBorder: "#888888", // Border color for nodes
-	lineColor: "#cccccc", // Lines connecting nodes
-	primaryColor: "#3c3c3c", // Primary color for highlights
-	primaryTextColor: "#ffffff", // Text in primary colored elements
-	primaryBorderColor: "#888888",
-	secondaryColor: "#2d2d2d", // Secondary color for alternate elements
-	tertiaryColor: "#454545", // Third color for special elements
-
-	// Class diagram specific
-	classText: "#ffffff",
-
-	// State diagram specific
-	labelColor: "#ffffff",
-
-	// Sequence diagram specific
-	actorLineColor: "#cccccc",
-	actorBkg: "#2d2d2d",
-	actorBorder: "#888888",
-	actorTextColor: "#ffffff",
-
-	// Flow diagram specific
-	fillType0: "#2d2d2d",
-	fillType1: "#3c3c3c",
-	fillType2: "#454545",
+export interface MermaidTheme {
+	background: string
+	textColor: string
+	mainBkg: string
+	nodeBorder: string
+	lineColor: string
+	primaryColor: string
+	primaryTextColor: string
+	primaryBorderColor: string
+	secondaryColor: string
+	tertiaryColor: string
+	classText: string
+	labelColor: string
+	actorLineColor: string
+	actorBkg: string
+	actorBorder: string
+	actorTextColor: string
+	fillType0: string
+	fillType1: string
+	fillType2: string
+	[key: string]: string
 }
 
 /**
  * Initializes Mermaid with a consistent theme and configuration.
  * This should be called once at application startup or when the theme changes.
  */
-export function initializeMermaid() {
+export function initializeMermaid(theme: MermaidTheme) {
 	mermaid.initialize({
 		startOnLoad: false,
 		securityLevel: "loose",
 		theme: "dark",
 		themeVariables: {
-			...MERMAID_THEME,
+			...theme,
 			fontSize: "16px",
 			fontFamily: "var(--vscode-font-family, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif)",
 
@@ -129,7 +122,7 @@ export class MermaidSyntaxFixer {
 	/**
 	 * Attempts to fix invalid Mermaid syntax using LLM assistance
 	 */
-	static async fixSyntax(originalCode: string, error: string): Promise<MermaidFixResult> {
+	static async fixSyntax(originalCode: string, error: string, _theme?: MermaidTheme): Promise<MermaidFixResult> {
 		let currentCode = originalCode
 		let lastError = error
 
@@ -228,7 +221,7 @@ export class MermaidSyntaxFixer {
 	/**
 	 * Attempts to fix Mermaid syntax with automatic retry and fallback
 	 */
-	static async autoFixSyntax(code: string): Promise<MermaidFixResult> {
+	static async autoFixSyntax(code: string, theme?: MermaidTheme): Promise<MermaidFixResult> {
 		// Apply manual fixes first
 		const manuallyFixedCode = this.applyManualFixes(code)
 
@@ -244,6 +237,6 @@ export class MermaidSyntaxFixer {
 		}
 
 		// If invalid, attempt to fix it with LLM
-		return this.fixSyntax(manuallyFixedCode, validation.error || "Unknown syntax error")
+		return this.fixSyntax(manuallyFixedCode, validation.error || "Unknown syntax error", theme)
 	}
 }

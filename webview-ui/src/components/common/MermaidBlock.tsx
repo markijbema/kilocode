@@ -5,9 +5,39 @@ import { useDebounceEffect } from "@src/utils/useDebounceEffect"
 import { vscode } from "@src/utils/vscode"
 import { useAppTranslation } from "@src/i18n/TranslationContext"
 import { useCopyToClipboard } from "@src/utils/clipboard"
-import { MermaidSyntaxFixer, initializeMermaid, MERMAID_THEME } from "@src/services/mermaidSyntaxFixer"
+import { MermaidSyntaxFixer, initializeMermaid } from "@src/services/mermaidSyntaxFixer"
 import CodeBlock from "./CodeBlock"
 import { MermaidButton } from "@/components/common/MermaidButton"
+
+export const MERMAID_THEME = {
+	background: "#1e1e1e", // VS Code dark theme background
+	textColor: "#ffffff", // Main text color
+	mainBkg: "#2d2d2d", // Background for nodes
+	nodeBorder: "#888888", // Border color for nodes
+	lineColor: "#cccccc", // Lines connecting nodes
+	primaryColor: "#3c3c3c", // Primary color for highlights
+	primaryTextColor: "#ffffff", // Text in primary colored elements
+	primaryBorderColor: "#888888",
+	secondaryColor: "#2d2d2d", // Secondary color for alternate elements
+	tertiaryColor: "#454545", // Third color for special elements
+
+	// Class diagram specific
+	classText: "#ffffff",
+
+	// State diagram specific
+	labelColor: "#ffffff",
+
+	// Sequence diagram specific
+	actorLineColor: "#cccccc",
+	actorBkg: "#2d2d2d",
+	actorBorder: "#888888",
+	actorTextColor: "#ffffff",
+
+	// Flow diagram specific
+	fillType0: "#2d2d2d",
+	fillType1: "#3c3c3c",
+	fillType2: "#454545",
+}
 
 interface MermaidBlockProps {
 	code: string
@@ -24,6 +54,11 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 	const [hasAutoFixed, setHasAutoFixed] = useState(false)
 	const { showCopyFeedback, copyWithFeedback } = useCopyToClipboard()
 	const { t } = useAppTranslation()
+
+	// Initialize mermaid with our theme
+	useEffect(() => {
+		initializeMermaid(MERMAID_THEME)
+	}, [])
 
 	// 1) Whenever `code` changes, mark that we need to re-render a new chart
 	useEffect(() => {
@@ -63,7 +98,7 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 						setIsFixing(true)
 
 						try {
-							const fixResult = await MermaidSyntaxFixer.autoFixSyntax(currentCode)
+							const fixResult = await MermaidSyntaxFixer.autoFixSyntax(currentCode, MERMAID_THEME)
 
 							if (fixResult.success && fixResult.fixedCode && fixResult.fixedCode !== currentCode) {
 								setCurrentCode(fixResult.fixedCode)
@@ -126,7 +161,7 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 		setError(null)
 
 		try {
-			const fixResult = await MermaidSyntaxFixer.autoFixSyntax(code)
+			const fixResult = await MermaidSyntaxFixer.autoFixSyntax(code, MERMAID_THEME)
 
 			if (fixResult.success && fixResult.fixedCode) {
 				setCurrentCode(fixResult.fixedCode)
