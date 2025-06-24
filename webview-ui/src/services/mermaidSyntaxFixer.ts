@@ -55,14 +55,8 @@ export class MermaidSyntaxFixer {
 	 */
 	static async validateSyntax(code: string): Promise<MermaidValidationResult> {
 		try {
-			// Apply deterministic fixes first
-			const fixedCode = this.applyDeterministicFixes(code)
-
-			// Import mermaid dynamically to avoid issues
 			const mermaid = (await import("mermaid")).default
-
-			// Try to parse the code
-			await mermaid.parse(fixedCode)
+			await mermaid.parse(code)
 			return { isValid: true }
 		} catch (error) {
 			return {
@@ -81,7 +75,6 @@ export class MermaidSyntaxFixer {
 
 		for (let attempt = 1; attempt <= this.MAX_FIX_ATTEMPTS; attempt++) {
 			try {
-				// Request LLM to fix the syntax
 				const fixedCode = await this.requestLLMFix(currentCode, lastError, attempt)
 
 				if (!fixedCode) {
@@ -92,7 +85,6 @@ export class MermaidSyntaxFixer {
 					}
 				}
 
-				// Validate the fixed code
 				const validation = await this.validateSyntax(fixedCode)
 
 				if (validation.isValid) {
@@ -129,13 +121,11 @@ export class MermaidSyntaxFixer {
 		return new Promise((resolve, reject) => {
 			const requestId = `mermaid-fix-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
-			// Set up timeout
 			const timeout = setTimeout(() => {
 				cleanup()
 				reject(new Error("LLM fix request timed out"))
 			}, this.FIX_TIMEOUT)
 
-			// Set up message listener for the response
 			const messageListener = (event: MessageEvent) => {
 				const message = event.data
 				if (message.type === "mermaidFixResponse" && message.requestId === requestId) {
@@ -154,10 +144,8 @@ export class MermaidSyntaxFixer {
 				window.removeEventListener("message", messageListener)
 			}
 
-			// Add message listener
 			window.addEventListener("message", messageListener)
 
-			// Send fix request to extension
 			vscode.postMessage({
 				type: "fixMermaidSyntax",
 				requestId,
@@ -175,10 +163,8 @@ export class MermaidSyntaxFixer {
 	 * Attempts to fix Mermaid syntax with automatic retry and fallback
 	 */
 	static async autoFixSyntax(code: string): Promise<MermaidFixResult> {
-		// Apply deterministic fixes first
 		const deterministicallyFixedCode = this.applyDeterministicFixes(code)
 
-		// First validate the deterministically fixed code
 		const validation = await this.validateSyntax(deterministicallyFixedCode)
 
 		if (validation.isValid) {
@@ -187,9 +173,8 @@ export class MermaidSyntaxFixer {
 				fixedCode: deterministicallyFixedCode,
 				attempts: 0,
 			}
+		} else {
+			return this.fixSyntax(deterministicallyFixedCode, validation.error || "Unknown syntax error")
 		}
-
-		// If invalid, attempt to fix it with LLM
-		return this.fixSyntax(deterministicallyFixedCode, validation.error || "Unknown syntax error")
 	}
 }
