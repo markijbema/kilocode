@@ -115,57 +115,61 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 					containerRef.current.innerHTML = ""
 				}
 
-				try {
-					await mermaid.parse(code)
-					const id = `mermaid-${Math.random().toString(36).substring(2)}`
-					const { svg } = await mermaid.render(id, code)
-
-					if (containerRef.current) {
-						containerRef.current.innerHTML = svg
-					}
-
-					setError(null)
-				} catch (err) {
-					const errorMessage = err instanceof Error ? err.message : "Failed to render Mermaid diagram"
-					console.warn("Mermaid parse/render failed:", err)
-
-					// If we haven't tried auto-fixing yet and this is the original code, attempt LLM fix
-					if (!hasAutoFixed && code === originalCode && !isFixing) {
-						setIsFixing(true)
-
-						try {
-							const fixResult = await MermaidSyntaxFixer.autoFixSyntax(code)
-
-							if (fixResult.fixedCode && fixResult.fixedCode !== code) {
-								// Use the improved code even if not completely successful
-								setCurrentCode(fixResult.fixedCode)
-								setFixAttempts(fixResult.attempts || 0)
-
-								if (fixResult.success) {
-									setHasAutoFixed(true)
-									// The useEffect will trigger re-render with fixed code
-									return
-								}
-							}
-
-							if (!fixResult.success) {
-								setError(errorMessage)
-							}
-						} catch (fixError) {
-							console.warn("LLM fix failed:", fixError)
-							setError(errorMessage)
-						} finally {
-							setIsFixing(false)
+				return mermaid
+					.parse(code)
+					.then(() => {
+						const id = `mermaid-${Math.random().toString(36).substring(2)}`
+						return mermaid.render(id, code)
+					})
+					.then(({ svg }) => {
+						if (containerRef.current) {
+							containerRef.current.innerHTML = svg
 						}
-					} else {
-						// Either already tried fixing or this is a manual retry
-						setError(errorMessage)
-					}
-				} finally {
-					if (!isFixing) {
-						setIsLoading(false)
-					}
-				}
+						setError(null)
+					})
+					.catch((err) => {
+						const errorMessage = err instanceof Error ? err.message : "Failed to render Mermaid diagram"
+						console.warn("Mermaid parse/render failed:", err)
+
+						// If we haven't tried auto-fixing yet and this is the original code, attempt LLM fix
+						if (!hasAutoFixed && code === originalCode && !isFixing) {
+							setIsFixing(true)
+
+							return MermaidSyntaxFixer.autoFixSyntax(code)
+								.then((fixResult) => {
+									if (fixResult.fixedCode && fixResult.fixedCode !== code) {
+										// Use the improved code even if not completely successful
+										setCurrentCode(fixResult.fixedCode)
+										setFixAttempts(fixResult.attempts || 0)
+
+										if (fixResult.success) {
+											setHasAutoFixed(true)
+											// The useEffect will trigger re-render with fixed code
+											return
+										}
+									}
+
+									if (!fixResult.success) {
+										setError(errorMessage)
+									}
+								})
+								.catch((fixError) => {
+									console.warn("LLM fix failed:", fixError)
+									setError(errorMessage)
+								})
+								.finally(() => {
+									setIsFixing(false)
+								})
+						} else {
+							// Either already tried fixing or this is a manual retry
+							setError(errorMessage)
+						}
+					})
+					.finally(() => {
+						if (!isFixing) {
+							setIsLoading(false)
+						}
+					})
 			}
 
 			renderMermaid()
