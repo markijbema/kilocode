@@ -26,7 +26,6 @@ describe("MermaidSyntaxFixer", () => {
 		})
 
 		it("should return success and fixed code when validation succeeds", async () => {
-			// Mock applyDeterministicFixes
 			const applyDeterministicFixesSpy = vi.spyOn(MermaidSyntaxFixer, "applyDeterministicFixes")
 			applyDeterministicFixesSpy.mockReturnValue("deterministically fixed code")
 
@@ -55,21 +54,13 @@ describe("MermaidSyntaxFixer", () => {
 			applyDeterministicFixesSpy.mockReturnValueOnce("deterministically fixed first attempt")
 			applyDeterministicFixesSpy.mockReturnValueOnce("deterministically fixed second attempt")
 
-			// Set MAX_FIX_ATTEMPTS to 2 for this test
-			const originalMaxAttempts = (MermaidSyntaxFixer as any).MAX_FIX_ATTEMPTS
-			;(MermaidSyntaxFixer as any).MAX_FIX_ATTEMPTS = 2
-
 			const result = await MermaidSyntaxFixer.fixSyntax("original code", "initial error")
-
-			// Restore original value
-			;(MermaidSyntaxFixer as any).MAX_FIX_ATTEMPTS = originalMaxAttempts
 
 			expect(result.success).toBe(false)
 			expect(result.fixedCode).toBe("deterministically fixed second attempt") // Should return the deterministically fixed last attempt
 			expect(result.attempts).toBe(2)
 			expect(result.error).toContain("Failed to fix syntax after 2 attempts")
 
-			// Verify applyDeterministicFixes was called for each LLM response
 			expect(applyDeterministicFixesSpy).toHaveBeenCalledTimes(2)
 			expect(applyDeterministicFixesSpy).toHaveBeenNthCalledWith(1, "first attempt")
 			expect(applyDeterministicFixesSpy).toHaveBeenNthCalledWith(2, "second attempt")
