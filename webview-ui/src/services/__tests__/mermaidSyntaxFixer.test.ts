@@ -26,16 +26,19 @@ describe("MermaidSyntaxFixer", () => {
 		})
 
 		it("should return success and fixed code when validation succeeds", async () => {
-			// Mock successful validation
+			// Mock applyDeterministicFixes
+			const applyDeterministicFixesSpy = vi.spyOn(MermaidSyntaxFixer, "applyDeterministicFixes")
+			applyDeterministicFixesSpy.mockReturnValue("deterministically fixed code")
+
 			validateSyntaxSpy.mockResolvedValue({ isValid: true })
-			// Mock successful LLM fix
 			requestLLMFixSpy.mockResolvedValue("fixed code")
 
 			const result = await MermaidSyntaxFixer.fixSyntax("original code", "error")
 
 			expect(result.success).toBe(true)
-			expect(result.fixedCode).toBe("fixed code")
+			expect(result.fixedCode).toBe("deterministically fixed code")
 			expect(result.attempts).toBe(1)
+			expect(applyDeterministicFixesSpy).toHaveBeenCalledWith("fixed code")
 		})
 
 		it("should return the best attempt even when fix is not successful", async () => {
@@ -47,6 +50,11 @@ describe("MermaidSyntaxFixer", () => {
 			requestLLMFixSpy.mockResolvedValueOnce("first attempt")
 			requestLLMFixSpy.mockResolvedValueOnce("second attempt")
 
+			// Mock applyDeterministicFixes
+			const applyDeterministicFixesSpy = vi.spyOn(MermaidSyntaxFixer, "applyDeterministicFixes")
+			applyDeterministicFixesSpy.mockReturnValueOnce("deterministically fixed first attempt")
+			applyDeterministicFixesSpy.mockReturnValueOnce("deterministically fixed second attempt")
+
 			// Set MAX_FIX_ATTEMPTS to 2 for this test
 			const originalMaxAttempts = (MermaidSyntaxFixer as any).MAX_FIX_ATTEMPTS
 			;(MermaidSyntaxFixer as any).MAX_FIX_ATTEMPTS = 2
@@ -57,9 +65,14 @@ describe("MermaidSyntaxFixer", () => {
 			;(MermaidSyntaxFixer as any).MAX_FIX_ATTEMPTS = originalMaxAttempts
 
 			expect(result.success).toBe(false)
-			expect(result.fixedCode).toBe("second attempt") // Should return the last attempt
+			expect(result.fixedCode).toBe("deterministically fixed second attempt") // Should return the deterministically fixed last attempt
 			expect(result.attempts).toBe(2)
 			expect(result.error).toContain("Failed to fix syntax after 2 attempts")
+
+			// Verify applyDeterministicFixes was called for each LLM response
+			expect(applyDeterministicFixesSpy).toHaveBeenCalledTimes(2)
+			expect(applyDeterministicFixesSpy).toHaveBeenNthCalledWith(1, "first attempt")
+			expect(applyDeterministicFixesSpy).toHaveBeenNthCalledWith(2, "second attempt")
 		})
 
 		it("should return the best attempt when LLM request fails", async () => {
@@ -70,11 +83,16 @@ describe("MermaidSyntaxFixer", () => {
 			// Mock failed validation for first attempt
 			validateSyntaxSpy.mockResolvedValueOnce({ isValid: false, error: "still invalid" })
 
+			// Mock applyDeterministicFixes
+			const applyDeterministicFixesSpy = vi.spyOn(MermaidSyntaxFixer, "applyDeterministicFixes")
+			applyDeterministicFixesSpy.mockReturnValue("deterministically fixed first attempt")
+
 			const result = await MermaidSyntaxFixer.fixSyntax("original code", "error")
 
 			expect(result.success).toBe(false)
-			expect(result.fixedCode).toBe("first attempt") // Should return the best attempt so far
+			expect(result.fixedCode).toBe("deterministically fixed first attempt") // Should return the deterministically fixed best attempt
 			expect(result.error).toContain("LLM request failed")
+			expect(applyDeterministicFixesSpy).toHaveBeenCalledWith("first attempt")
 		})
 
 		it("should return the original code when LLM fails to provide a fix", async () => {
@@ -193,13 +211,20 @@ describe("MermaidSyntaxFixer", () => {
 				// Mock successful validation after deterministic fixes
 				validateSyntaxSpy.mockResolvedValue({ isValid: true })
 
+				// Mock fixSyntax to return a successful result
+				fixSyntaxSpy.mockResolvedValue({
+					success: true,
+					fixedCode: "A --> B",
+					attempts: 0,
+				})
+
 				const result = await MermaidSyntaxFixer.autoFixSyntax("A --&gt; B")
 
 				expect(result.success).toBe(true)
 				expect(result.fixedCode).toBe("A --> B")
 				expect(result.attempts).toBe(0)
-				// fixSyntax should not be called
-				expect(fixSyntaxSpy).not.toHaveBeenCalled()
+				// fixSyntax should still be called even though validation passed
+				expect(fixSyntaxSpy).toHaveBeenCalled()
 			})
 
 			it("should call fixSyntax when deterministic fixes are not sufficient", async () => {

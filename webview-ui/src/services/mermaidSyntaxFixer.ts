@@ -65,20 +65,22 @@ export class MermaidSyntaxFixer {
 					}
 				}
 
-				bestAttempt = fixedCode
+				// Apply deterministic fixes after every LLM response
+				const deterministicallyFixedCode = this.applyDeterministicFixes(fixedCode)
+				bestAttempt = deterministicallyFixedCode
 
-				const validation = await this.validateSyntax(fixedCode)
+				const validation = await this.validateSyntax(deterministicallyFixedCode)
 
 				if (validation.isValid) {
 					return {
 						success: true,
-						fixedCode,
+						fixedCode: deterministicallyFixedCode,
 						attempts: attempt,
 					}
 				}
 
 				// If still invalid, try again with the new error
-				currentCode = fixedCode
+				currentCode = deterministicallyFixedCode
 				lastError = validation.error || "Unknown validation error"
 			} catch (requestError) {
 				return {
@@ -157,8 +159,9 @@ export class MermaidSyntaxFixer {
 				fixedCode: deterministicallyFixedCode,
 				attempts: 0,
 			}
-		} else {
-			return this.fixSyntax(deterministicallyFixedCode, validation.error || "Unknown syntax error")
 		}
+
+		// Always call fixSyntax regardless of validation result
+		return this.fixSyntax(deterministicallyFixedCode, validation.error || "Unknown syntax error")
 	}
 }
