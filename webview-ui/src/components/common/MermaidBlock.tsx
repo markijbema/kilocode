@@ -200,7 +200,6 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 		if (fixResult.fixedCode) {
 			// Use the improved code even if not completely successful
 			setCurrentCode(fixResult.fixedCode)
-			setFixAttempts(fixResult.attempts || 0)
 		}
 
 		if (fixResult.success) {
