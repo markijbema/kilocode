@@ -131,38 +131,25 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 						const errorMessage = err instanceof Error ? err.message : "Failed to render Mermaid diagram"
 						console.warn("Mermaid parse/render failed:", err)
 
-						// If we haven't tried auto-fixing yet and this is the original code, attempt LLM fix
-						if (!hasAutoFixed && code === originalCode && !isFixing) {
+						if (hasAutoFixed || code !== originalCode || isFixing) {
+							setError(errorMessage)
+						} else {
+							// If we haven't tried auto-fixing yet and this is the original code, attempt LLM fix
 							setIsFixing(true)
 
-							return MermaidSyntaxFixer.autoFixSyntax(code)
-								.then((fixResult) => {
-									if (fixResult.fixedCode && fixResult.fixedCode !== code) {
-										// Use the improved code even if not completely successful
-										setCurrentCode(fixResult.fixedCode)
-										setFixAttempts(fixResult.attempts || 0)
-
-										if (fixResult.success) {
-											setHasAutoFixed(true)
-											// The useEffect will trigger re-render with fixed code
-											return
-										}
+							// Use a separate async function to handle the fix
+							const attemptFix = async () => {
+								try {
+									const result = await handleSyntaxFix(code)
+									if (!result.success) {
+										setError(result.error || errorMessage)
 									}
-
-									if (!fixResult.success) {
-										setError(errorMessage)
-									}
-								})
-								.catch((fixError) => {
-									console.warn("LLM fix failed:", fixError)
-									setError(errorMessage)
-								})
-								.finally(() => {
+								} finally {
 									setIsFixing(false)
-								})
-						} else {
-							// Either already tried fixing or this is a manual retry
-							setError(errorMessage)
+								}
+							}
+
+							return attemptFix()
 						}
 					})
 					.finally(() => {
@@ -198,15 +185,20 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 		}
 	}
 
-	// Manual fix function
-	const handleManualFix = async () => {
-		if (isFixing) return
+	// Common function to handle syntax fixing
+	const handleSyntaxFix = async (
+		codeToFix: string,
+		isManualFix: boolean = false,
+	): Promise<{ success: boolean; error?: string }> => {
+		if (isFixing) return { success: false, error: "Already fixing" }
 
 		setIsFixing(true)
-		setError(null)
+		if (isManualFix) {
+			setError(null)
+		}
 
 		try {
-			const fixResult = await MermaidSyntaxFixer.autoFixSyntax(originalCode)
+			const fixResult = await MermaidSyntaxFixer.autoFixSyntax(codeToFix)
 
 			if (fixResult.fixedCode) {
 				// Use the improved code even if not completely successful
@@ -215,19 +207,37 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 
 				if (fixResult.success) {
 					setHasAutoFixed(true)
+					return { success: true }
 				}
 			}
 
 			// Still show the error if not successful
 			if (!fixResult.success) {
-				setError(fixResult.error || "Failed to fix Mermaid syntax")
+				const errorMessage = fixResult.error || "Failed to fix Mermaid syntax"
+				if (isManualFix) {
+					setError(errorMessage)
+				}
+				return { success: false, error: errorMessage }
 			}
+
+			return { success: false }
 		} catch (fixError) {
-			console.warn("Manual fix failed:", fixError)
-			setError(fixError instanceof Error ? fixError.message : "Fix request failed")
+			console.warn(`${isManualFix ? "Manual" : "Auto"} fix failed:`, fixError)
+			const errorMessage = fixError instanceof Error ? fixError.message : "Fix request failed"
+			if (isManualFix) {
+				setError(errorMessage)
+			}
+			return { success: false, error: errorMessage }
 		} finally {
-			setIsFixing(false)
+			if (isManualFix) {
+				setIsFixing(false)
+			}
 		}
+	}
+
+	// Manual fix function
+	const handleManualFix = async () => {
+		await handleSyntaxFix(originalCode, true)
 	}
 
 	// Copy functionality handled directly through the copyWithFeedback utility
