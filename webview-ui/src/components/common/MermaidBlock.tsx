@@ -195,20 +195,15 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 				// Use the improved code even if not completely successful
 				setCurrentCode(fixResult.fixedCode)
 				setFixAttempts(fixResult.attempts || 0)
-
-				if (fixResult.success) {
-					setHasAutoFixed(true)
-					return { success: true }
-				}
 			}
 
-			// Return error if not successful
-			if (!fixResult.success) {
-				const errorMessage = fixResult.error || "Failed to fix Mermaid syntax"
-				return { success: false, error: errorMessage }
+			if (fixResult.success) {
+				setHasAutoFixed(true)
+				return { success: true }
 			}
 
-			return { success: false }
+			const errorMessage = fixResult.error || "Failed to fix Mermaid syntax"
+			return { success: false, error: errorMessage }
 		} catch (fixError) {
 			console.warn("Fix failed:", fixError)
 			const errorMessage = fixError instanceof Error ? fixError.message : "Fix request failed"
