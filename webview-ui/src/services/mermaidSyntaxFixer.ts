@@ -46,7 +46,7 @@ export class MermaidSyntaxFixer {
 	/**
 	 * Requests the LLM to fix the Mermaid syntax via the extension
 	 */
-	private static async requestLLMFix(code: string, error: string, attempt: number): Promise<string | null> {
+	private static async requestLLMFix(code: string, error: string): Promise<string | null> {
 		return new Promise((resolve, reject) => {
 			const requestId = `mermaid-fix-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
 
@@ -79,11 +79,7 @@ export class MermaidSyntaxFixer {
 				type: "fixMermaidSyntax",
 				requestId,
 				text: code,
-				values: {
-					error,
-					attempt,
-					maxAttempts: this.MAX_FIX_ATTEMPTS,
-				},
+				values: { error },
 			})
 		})
 	}
@@ -120,7 +116,7 @@ export class MermaidSyntaxFixer {
 
 			try {
 				llmAttempts++
-				const fixedCode = await this.requestLLMFix(currentCode, lastError, llmAttempts)
+				const fixedCode = await this.requestLLMFix(currentCode, lastError)
 
 				if (!fixedCode) {
 					finalError = "LLM failed to provide a fix"

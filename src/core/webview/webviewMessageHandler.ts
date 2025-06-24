@@ -1716,8 +1716,7 @@ export const webviewMessageHandler = async (
 					// Create a prompt to fix the Mermaid syntax
 					const fixPrompt = `You are a Mermaid diagram syntax expert. Fix the following invalid Mermaid diagram syntax and return ONLY the corrected Mermaid code without any explanations or markdown formatting.
 
-Original error: ${message.values?.error || "Unknown syntax error"}
-Attempt: ${message.values?.attempt || 1} of ${message.values?.maxAttempts || 3}
+Error: ${message.values?.error || "Unknown syntax error"}
 
 Invalid Mermaid code:
 \`\`\`
@@ -1737,7 +1736,6 @@ Corrected Mermaid code:`
 
 					const fixedCode = await singleCompletionHandler(apiConfiguration, fixPrompt)
 
-					// Send the fixed code back to the webview
 					provider.postMessageToWebview({
 						type: "mermaidFixResponse",
 						requestId: message.requestId,
@@ -1748,7 +1746,6 @@ Corrected Mermaid code:`
 					const errorMessage = error instanceof Error ? error.message : "Failed to fix Mermaid syntax"
 					provider.log(`Error fixing Mermaid syntax: ${errorMessage}`)
 
-					// Send error response back to webview
 					provider.postMessageToWebview({
 						type: "mermaidFixResponse",
 						requestId: message.requestId,
