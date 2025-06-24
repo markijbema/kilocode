@@ -141,14 +141,20 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 						try {
 							const fixResult = await MermaidSyntaxFixer.autoFixSyntax(currentCode)
 
-							if (fixResult.success && fixResult.fixedCode && fixResult.fixedCode !== currentCode) {
+							if (fixResult.fixedCode && fixResult.fixedCode !== currentCode) {
+								// Use the improved code even if not completely successful
 								setCurrentCode(fixResult.fixedCode)
 								setHasAutoFixed(true)
 								setFixAttempts(fixResult.attempts || 0)
-								// The useEffect will trigger re-render with fixed code
-								return
-							} else {
-								// LLM couldn't fix it, show the original error
+
+								if (fixResult.success) {
+									// The useEffect will trigger re-render with fixed code
+									return
+								}
+							}
+
+							// Still show the error if not successful
+							if (!fixResult.success) {
 								setError(errorMessage)
 							}
 						} catch (fixError) {
@@ -204,11 +210,15 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 		try {
 			const fixResult = await MermaidSyntaxFixer.autoFixSyntax(code)
 
-			if (fixResult.success && fixResult.fixedCode) {
+			if (fixResult.fixedCode) {
+				// Use the improved code even if not completely successful
 				setCurrentCode(fixResult.fixedCode)
 				setHasAutoFixed(true)
 				setFixAttempts(fixResult.attempts || 0)
-			} else {
+			}
+
+			// Still show the error if not successful
+			if (!fixResult.success) {
 				setError(fixResult.error || "Failed to fix Mermaid syntax")
 			}
 		} catch (fixError) {

@@ -68,10 +68,12 @@ export class MermaidSyntaxFixer {
 
 	/**
 	 * Attempts to fix invalid Mermaid syntax using LLM assistance
+	 * Always returns the best attempt at fixing the code, even if not completely successful
 	 */
 	static async fixSyntax(originalCode: string, error: string): Promise<MermaidFixResult> {
 		let currentCode = originalCode
 		let lastError = error
+		let bestAttempt = originalCode // Track the best attempt so far
 
 		for (let attempt = 1; attempt <= this.MAX_FIX_ATTEMPTS; attempt++) {
 			try {
@@ -80,10 +82,14 @@ export class MermaidSyntaxFixer {
 				if (!fixedCode) {
 					return {
 						success: false,
+						fixedCode: bestAttempt, // Return the best attempt so far
 						error: "LLM failed to provide a fix",
 						attempts: attempt,
 					}
 				}
+
+				// Always update our best attempt with the latest fix
+				bestAttempt = fixedCode
 
 				const validation = await this.validateSyntax(fixedCode)
 
@@ -101,6 +107,7 @@ export class MermaidSyntaxFixer {
 			} catch (requestError) {
 				return {
 					success: false,
+					fixedCode: bestAttempt, // Return the best attempt so far
 					error: requestError instanceof Error ? requestError.message : "Fix request failed",
 					attempts: attempt,
 				}
@@ -109,6 +116,7 @@ export class MermaidSyntaxFixer {
 
 		return {
 			success: false,
+			fixedCode: bestAttempt, // Return the best attempt even after all attempts fail
 			error: `Failed to fix syntax after ${this.MAX_FIX_ATTEMPTS} attempts. Last error: ${lastError}`,
 			attempts: this.MAX_FIX_ATTEMPTS,
 		}
