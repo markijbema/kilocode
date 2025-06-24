@@ -144,10 +144,10 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 							if (fixResult.fixedCode && fixResult.fixedCode !== currentCode) {
 								// Use the improved code even if not completely successful
 								setCurrentCode(fixResult.fixedCode)
-								setHasAutoFixed(true)
 								setFixAttempts(fixResult.attempts || 0)
 
 								if (fixResult.success) {
+									setHasAutoFixed(true)
 									// The useEffect will trigger re-render with fixed code
 									return
 								}
@@ -213,8 +213,11 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 			if (fixResult.fixedCode) {
 				// Use the improved code even if not completely successful
 				setCurrentCode(fixResult.fixedCode)
-				setHasAutoFixed(true)
 				setFixAttempts(fixResult.attempts || 0)
+
+				if (fixResult.success) {
+					setHasAutoFixed(true)
+				}
 			}
 
 			// Still show the error if not successful
