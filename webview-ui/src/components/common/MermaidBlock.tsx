@@ -206,7 +206,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 			return { success: false, error: errorMessage }
 		} catch (fixError) {
 			console.warn("Fix failed:", fixError)
-			const errorMessage = fixError instanceof Error ? fixError.message : "Fix request failed"
+			const errorMessage = fixError instanceof Error ? fixError.message : t("common:mermaid.errors.fix_failed")
 			return { success: false, error: errorMessage }
 		}
 	}
