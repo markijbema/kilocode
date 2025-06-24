@@ -44,63 +44,6 @@ export class MermaidSyntaxFixer {
 	}
 
 	/**
-	 * Attempts to fix invalid Mermaid syntax using LLM assistance
-	 * Always returns the best attempt at fixing the code, even if not completely successful
-	 */
-	static async fixSyntax(originalCode: string, error: string): Promise<MermaidFixResult> {
-		let currentCode = originalCode
-		let lastError = error
-		let bestAttempt = originalCode // Track the best attempt so far; fixedCode can be empty, so we cannot always use that
-
-		for (let attempt = 1; attempt <= this.MAX_FIX_ATTEMPTS; attempt++) {
-			try {
-				const fixedCode = await this.requestLLMFix(currentCode, lastError, attempt)
-
-				if (!fixedCode) {
-					return {
-						success: false,
-						fixedCode: bestAttempt,
-						error: "LLM failed to provide a fix",
-						attempts: attempt,
-					}
-				}
-
-				// Apply deterministic fixes after every LLM response
-				const deterministicallyFixedCode = this.applyDeterministicFixes(fixedCode)
-				bestAttempt = deterministicallyFixedCode
-
-				const validation = await this.validateSyntax(deterministicallyFixedCode)
-
-				if (validation.isValid) {
-					return {
-						success: true,
-						fixedCode: deterministicallyFixedCode,
-						attempts: attempt,
-					}
-				}
-
-				// If still invalid, try again with the new error
-				currentCode = deterministicallyFixedCode
-				lastError = validation.error || "Unknown validation error"
-			} catch (requestError) {
-				return {
-					success: false,
-					fixedCode: bestAttempt,
-					error: requestError instanceof Error ? requestError.message : "Fix request failed",
-					attempts: attempt,
-				}
-			}
-		}
-
-		return {
-			success: false,
-			fixedCode: bestAttempt,
-			error: `Failed to fix syntax after ${this.MAX_FIX_ATTEMPTS} attempts. Last error: ${lastError}`,
-			attempts: this.MAX_FIX_ATTEMPTS,
-		}
-	}
-
-	/**
 	 * Requests the LLM to fix the Mermaid syntax via the extension
 	 */
 	private static async requestLLMFix(code: string, error: string, attempt: number): Promise<string | null> {
@@ -147,21 +90,70 @@ export class MermaidSyntaxFixer {
 
 	/**
 	 * Attempts to fix Mermaid syntax with automatic retry and fallback
+	 * Always returns the best attempt at fixing the code, even if not completely successful
 	 */
 	static async autoFixSyntax(code: string): Promise<MermaidFixResult> {
-		const deterministicallyFixedCode = this.applyDeterministicFixes(code)
+		// First, apply deterministic fixes
+		let currentCode = this.applyDeterministicFixes(code)
+		let bestAttempt = currentCode
 
-		const validation = await this.validateSyntax(deterministicallyFixedCode)
-
+		// Check if deterministic fixes were sufficient
+		let validation = await this.validateSyntax(currentCode)
 		if (validation.isValid) {
 			return {
 				success: true,
-				fixedCode: deterministicallyFixedCode,
+				fixedCode: currentCode,
 				attempts: 0,
 			}
 		}
 
-		// Always call fixSyntax regardless of validation result
-		return this.fixSyntax(deterministicallyFixedCode, validation.error || "Unknown syntax error")
+		// If not valid, attempt LLM fixes
+		let lastError = validation.error || "Unknown syntax error"
+
+		for (let attempt = 1; attempt <= this.MAX_FIX_ATTEMPTS; attempt++) {
+			try {
+				const fixedCode = await this.requestLLMFix(currentCode, lastError, attempt)
+
+				if (!fixedCode) {
+					return {
+						success: false,
+						fixedCode: bestAttempt,
+						error: "LLM failed to provide a fix",
+						attempts: attempt,
+					}
+				}
+
+				// Apply deterministic fixes after every LLM response
+				currentCode = this.applyDeterministicFixes(fixedCode)
+				bestAttempt = currentCode
+
+				validation = await this.validateSyntax(currentCode)
+
+				if (validation.isValid) {
+					return {
+						success: true,
+						fixedCode: currentCode,
+						attempts: attempt,
+					}
+				}
+
+				// If still invalid, update error for next attempt
+				lastError = validation.error || "Unknown validation error"
+			} catch (requestError) {
+				return {
+					success: false,
+					fixedCode: bestAttempt,
+					error: requestError instanceof Error ? requestError.message : "Fix request failed",
+					attempts: attempt,
+				}
+			}
+		}
+
+		return {
+			success: false,
+			fixedCode: bestAttempt,
+			error: `Failed to fix syntax after ${this.MAX_FIX_ATTEMPTS} attempts. Last error: ${lastError}`,
+			attempts: this.MAX_FIX_ATTEMPTS,
+		}
 	}
 }
