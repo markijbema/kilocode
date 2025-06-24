@@ -93,62 +93,58 @@ export class MermaidSyntaxFixer {
 	 * Always returns the best attempt at fixing the code, even if not completely successful
 	 */
 	static async autoFixSyntax(code: string): Promise<MermaidFixResult> {
-		// First, apply deterministic fixes
-		let currentCode = this.applyDeterministicFixes(code)
-		let bestAttempt = currentCode
+		let currentCode = code
+		let bestAttempt = code
+		let lastError: string | undefined
+		let llmAttempts = 0
 
-		// Check if deterministic fixes were sufficient
-		let validation = await this.validateSyntax(currentCode)
-		if (validation.isValid) {
-			return {
-				success: true,
-				fixedCode: currentCode,
-				attempts: 0,
+		while (true) {
+			currentCode = this.applyDeterministicFixes(currentCode)
+			bestAttempt = currentCode
+
+			// Validate the current code
+			const validation = await this.validateSyntax(currentCode)
+			if (validation.isValid) {
+				return {
+					success: true,
+					fixedCode: currentCode,
+					attempts: llmAttempts,
+				}
 			}
-		}
 
-		// If not valid, attempt LLM fixes
-		let lastError = validation.error || "Unknown syntax error"
+			// Update error for potential LLM fix
+			lastError = validation.error || "Unknown syntax error"
 
-		for (let attempt = 1; attempt <= this.MAX_FIX_ATTEMPTS; attempt++) {
+			// break in the middle so we start and finish with a deterministic fix
+			if (llmAttempts >= this.MAX_FIX_ATTEMPTS) {
+				break
+			}
+
 			try {
-				const fixedCode = await this.requestLLMFix(currentCode, lastError, attempt)
+				llmAttempts++
+				const fixedCode = await this.requestLLMFix(currentCode, lastError, llmAttempts)
 
 				if (!fixedCode) {
 					return {
 						success: false,
 						fixedCode: bestAttempt,
 						error: "LLM failed to provide a fix",
-						attempts: attempt,
+						attempts: llmAttempts,
 					}
 				}
 
-				// Apply deterministic fixes after every LLM response
-				currentCode = this.applyDeterministicFixes(fixedCode)
-				bestAttempt = currentCode
-
-				validation = await this.validateSyntax(currentCode)
-
-				if (validation.isValid) {
-					return {
-						success: true,
-						fixedCode: currentCode,
-						attempts: attempt,
-					}
-				}
-
-				// If still invalid, update error for next attempt
-				lastError = validation.error || "Unknown validation error"
+				currentCode = fixedCode
 			} catch (requestError) {
 				return {
 					success: false,
 					fixedCode: bestAttempt,
 					error: requestError instanceof Error ? requestError.message : "Fix request failed",
-					attempts: attempt,
+					attempts: llmAttempts,
 				}
 			}
 		}
 
+		// If we exit the loop, it means we've exhausted all attempts
 		return {
 			success: false,
 			fixedCode: bestAttempt,
