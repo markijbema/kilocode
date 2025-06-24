@@ -1,5 +1,4 @@
 import { vscode } from "@src/utils/vscode"
-import mermaid from "mermaid"
 
 export interface MermaidFixResult {
 	success: boolean
@@ -175,7 +174,7 @@ export class MermaidSyntaxFixer {
 	/**
 	 * Attempts to fix Mermaid syntax with automatic retry and fallback
 	 */
-	static async autoFixSyntax(code: string, theme?: MermaidTheme): Promise<MermaidFixResult> {
+	static async autoFixSyntax(code: string): Promise<MermaidFixResult> {
 		// Apply manual fixes first
 		const manuallyFixedCode = this.applyManualFixes(code)
 

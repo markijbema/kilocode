@@ -139,7 +139,7 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 						setIsFixing(true)
 
 						try {
-							const fixResult = await MermaidSyntaxFixer.autoFixSyntax(currentCode, MERMAID_THEME)
+							const fixResult = await MermaidSyntaxFixer.autoFixSyntax(currentCode)
 
 							if (fixResult.success && fixResult.fixedCode && fixResult.fixedCode !== currentCode) {
 								setCurrentCode(fixResult.fixedCode)
@@ -202,7 +202,7 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 		setError(null)
 
 		try {
-			const fixResult = await MermaidSyntaxFixer.autoFixSyntax(code, MERMAID_THEME)
+			const fixResult = await MermaidSyntaxFixer.autoFixSyntax(code)
 
 			if (fixResult.success && fixResult.fixedCode) {
 				setCurrentCode(fixResult.fixedCode)
