@@ -43,9 +43,9 @@ export class MermaidSyntaxFixer {
 	private static readonly FIX_TIMEOUT = 30000 // 30 seconds
 
 	/**
-	 * Applies manual fixes for common LLM errors before validation
+	 * Applies deterministic fixes for common LLM errors before validation
 	 */
-	static applyManualFixes(code: string): string {
+	static applyDeterministicFixes(code: string): string {
 		// Fix HTML entity encoding: --&gt; should be -->
 		return code.replace(/--&gt;/g, "-->")
 	}
@@ -55,8 +55,8 @@ export class MermaidSyntaxFixer {
 	 */
 	static async validateSyntax(code: string): Promise<MermaidValidationResult> {
 		try {
-			// Apply manual fixes first
-			const fixedCode = this.applyManualFixes(code)
+			// Apply deterministic fixes first
+			const fixedCode = this.applyDeterministicFixes(code)
 
 			// Import mermaid dynamically to avoid issues
 			const mermaid = (await import("mermaid")).default
@@ -175,21 +175,21 @@ export class MermaidSyntaxFixer {
 	 * Attempts to fix Mermaid syntax with automatic retry and fallback
 	 */
 	static async autoFixSyntax(code: string): Promise<MermaidFixResult> {
-		// Apply manual fixes first
-		const manuallyFixedCode = this.applyManualFixes(code)
+		// Apply deterministic fixes first
+		const deterministicallyFixedCode = this.applyDeterministicFixes(code)
 
-		// First validate the manually fixed code
-		const validation = await this.validateSyntax(manuallyFixedCode)
+		// First validate the deterministically fixed code
+		const validation = await this.validateSyntax(deterministicallyFixedCode)
 
 		if (validation.isValid) {
 			return {
 				success: true,
-				fixedCode: manuallyFixedCode,
+				fixedCode: deterministicallyFixedCode,
 				attempts: 0,
 			}
 		}
 
 		// If invalid, attempt to fix it with LLM
-		return this.fixSyntax(manuallyFixedCode, validation.error || "Unknown syntax error")
+		return this.fixSyntax(deterministicallyFixedCode, validation.error || "Unknown syntax error")
 	}
 }
