@@ -1,4 +1,4 @@
-import { MermaidSyntaxFixer, MermaidFixResult } from "../mermaidSyntaxFixer"
+import { MermaidSyntaxFixer } from "../mermaidSyntaxFixer"
 import { vi, beforeEach, afterEach } from "vitest"
 
 // Mock the mermaid library

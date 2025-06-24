@@ -12,29 +12,6 @@ export interface MermaidValidationResult {
 	error?: string
 }
 
-export interface MermaidTheme {
-	background: string
-	textColor: string
-	mainBkg: string
-	nodeBorder: string
-	lineColor: string
-	primaryColor: string
-	primaryTextColor: string
-	primaryBorderColor: string
-	secondaryColor: string
-	tertiaryColor: string
-	classText: string
-	labelColor: string
-	actorLineColor: string
-	actorBkg: string
-	actorBorder: string
-	actorTextColor: string
-	fillType0: string
-	fillType1: string
-	fillType2: string
-	[key: string]: string
-}
-
 /**
  * Service for validating and fixing Mermaid syntax using LLM assistance
  */
