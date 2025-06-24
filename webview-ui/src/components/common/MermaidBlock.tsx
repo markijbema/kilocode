@@ -175,7 +175,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 		if (!svgEl) return
 
 		try {
-			const pngDataUrl = await svgToPng(svgEl, MERMAID_THEME.background)
+			const pngDataUrl = await svgToPng(svgEl)
 			vscode.postMessage({
 				type: "openImage",
 				text: pngDataUrl,
@@ -324,9 +324,9 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 			) : (
 				<MermaidButton
 					containerRef={containerRef}
-					code={originalCode}
+					code={code}
 					isLoading={isLoading || isFixing}
-					svgToPng={(svgEl) => svgToPng(svgEl, MERMAID_THEME.background)}>
+					svgToPng={svgToPng}>
 					<SvgContainer
 						onClick={handleClick}
 						ref={containerRef}
@@ -337,7 +337,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 	)
 }
 
-async function svgToPng(svgEl: SVGElement, backgroundColor: string): Promise<string> {
+async function svgToPng(svgEl: SVGElement): Promise<string> {
 	// Clone the SVG to avoid modifying the original
 	const svgClone = svgEl.cloneNode(true) as SVGElement
 
@@ -379,8 +379,8 @@ async function svgToPng(svgEl: SVGElement, backgroundColor: string): Promise<str
 			const ctx = canvas.getContext("2d")
 			if (!ctx) return reject("Canvas context not available")
 
-			// Fill background with the provided background color
-			ctx.fillStyle = backgroundColor
+			// Fill background with Mermaid's dark theme background color
+			ctx.fillStyle = MERMAID_THEME.background
 			ctx.fillRect(0, 0, canvas.width, canvas.height)
 
 			ctx.imageSmoothingEnabled = true
