@@ -185,17 +185,8 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 		}
 	}
 
-	// Common function to handle syntax fixing
-	const handleSyntaxFix = async (
-		codeToFix: string,
-		isManualFix: boolean = false,
-	): Promise<{ success: boolean; error?: string }> => {
+	const handleSyntaxFix = async (codeToFix: string): Promise<{ success: boolean; error?: string }> => {
 		if (isFixing) return { success: false, error: "Already fixing" }
-
-		setIsFixing(true)
-		if (isManualFix) {
-			setError(null)
-		}
 
 		try {
 			const fixResult = await MermaidSyntaxFixer.autoFixSyntax(codeToFix)
@@ -211,33 +202,35 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 				}
 			}
 
-			// Still show the error if not successful
+			// Return error if not successful
 			if (!fixResult.success) {
 				const errorMessage = fixResult.error || "Failed to fix Mermaid syntax"
-				if (isManualFix) {
-					setError(errorMessage)
-				}
 				return { success: false, error: errorMessage }
 			}
 
 			return { success: false }
 		} catch (fixError) {
-			console.warn(`${isManualFix ? "Manual" : "Auto"} fix failed:`, fixError)
+			console.warn("Fix failed:", fixError)
 			const errorMessage = fixError instanceof Error ? fixError.message : "Fix request failed"
-			if (isManualFix) {
-				setError(errorMessage)
-			}
 			return { success: false, error: errorMessage }
-		} finally {
-			if (isManualFix) {
-				setIsFixing(false)
-			}
 		}
 	}
 
 	// Manual fix function
 	const handleManualFix = async () => {
-		await handleSyntaxFix(originalCode, true)
+		if (isFixing) return
+
+		setIsFixing(true)
+		setError(null)
+
+		try {
+			const result = await handleSyntaxFix(originalCode)
+			if (!result.success) {
+				setError(result.error || "Failed to fix Mermaid syntax")
+			}
+		} finally {
+			setIsFixing(false)
+		}
 	}
 
 	// Copy functionality handled directly through the copyWithFeedback utility
