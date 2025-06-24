@@ -212,7 +212,6 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 		return { success: false, error: errorMessage }
 	}
 
-	// Manual fix function
 	const handleManualFix = async () => {
 		if (isFixing) return
 
