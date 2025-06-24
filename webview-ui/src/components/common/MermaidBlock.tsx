@@ -119,7 +119,6 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 				}
 
 				try {
-					// First try to parse and render the current code
 					await mermaid.parse(currentCode)
 					const id = `mermaid-${Math.random().toString(36).substring(2)}`
 					const { svg } = await mermaid.render(id, currentCode)
@@ -128,7 +127,6 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 						containerRef.current.innerHTML = svg
 					}
 
-					// Clear any previous errors
 					setError(null)
 				} catch (err) {
 					const errorMessage = err instanceof Error ? err.message : "Failed to render Mermaid diagram"
@@ -153,7 +151,6 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 								}
 							}
 
-							// Still show the error if not successful
 							if (!fixResult.success) {
 								setError(errorMessage)
 							}
