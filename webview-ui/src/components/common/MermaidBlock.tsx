@@ -139,14 +139,11 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 
 							// Use a separate async function to handle the fix
 							const attemptFix = async () => {
-								try {
-									const result = await handleSyntaxFix(code)
-									if (!result.success) {
-										setError(result.error || errorMessage)
-									}
-								} finally {
-									setIsFixing(false)
+								const result = await handleSyntaxFix(code)
+								if (!result.success) {
+									setError(result.error || errorMessage)
 								}
+								setIsFixing(false)
 							}
 
 							return attemptFix()
@@ -188,27 +185,21 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 	const handleSyntaxFix = async (codeToFix: string): Promise<{ success: boolean; error?: string }> => {
 		if (isFixing) return { success: false, error: "Already fixing" }
 
-		try {
-			const fixResult = await MermaidSyntaxFixer.autoFixSyntax(codeToFix)
+		const fixResult = await MermaidSyntaxFixer.autoFixSyntax(codeToFix)
 
-			if (fixResult.fixedCode) {
-				// Use the improved code even if not completely successful
-				setCurrentCode(fixResult.fixedCode)
-				setFixAttempts(fixResult.attempts || 0)
-			}
-
-			if (fixResult.success) {
-				setHasAutoFixed(true)
-				return { success: true }
-			}
-
-			const errorMessage = fixResult.error || t("common:mermaid.errors.fix_failed")
-			return { success: false, error: errorMessage }
-		} catch (fixError) {
-			console.warn("Fix failed:", fixError)
-			const errorMessage = fixError instanceof Error ? fixError.message : t("common:mermaid.errors.fix_failed")
-			return { success: false, error: errorMessage }
+		if (fixResult.fixedCode) {
+			// Use the improved code even if not completely successful
+			setCurrentCode(fixResult.fixedCode)
+			setFixAttempts(fixResult.attempts || 0)
 		}
+
+		if (fixResult.success) {
+			setHasAutoFixed(true)
+			return { success: true }
+		}
+
+		const errorMessage = fixResult.error || t("common:mermaid.errors.fix_failed")
+		return { success: false, error: errorMessage }
 	}
 
 	// Manual fix function
@@ -218,14 +209,11 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 		setIsFixing(true)
 		setError(null)
 
-		try {
-			const result = await handleSyntaxFix(originalCode)
-			if (!result.success) {
-				setError(result.error || t("common:mermaid.errors.fix_failed"))
-			}
-		} finally {
-			setIsFixing(false)
+		const result = await handleSyntaxFix(originalCode)
+		if (!result.success) {
+			setError(result.error || t("common:mermaid.errors.fix_failed"))
 		}
+		setIsFixing(false)
 	}
 
 	// Copy functionality handled directly through the copyWithFeedback utility
