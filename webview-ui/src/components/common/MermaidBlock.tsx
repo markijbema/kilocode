@@ -7,7 +7,7 @@ import { useAppTranslation } from "@src/i18n/TranslationContext"
 import { useCopyToClipboard } from "@src/utils/clipboard"
 import { MermaidSyntaxFixer } from "@src/services/mermaidSyntaxFixer"
 import CodeBlock from "./CodeBlock"
-import { MermaidButton } from "@src/components/common/MermaidButton"
+import { MermaidButton } from "@/components/common/MermaidButton"
 
 // Removed previous attempts at static imports for individual diagram types
 // as the paths were incorrect for Mermaid v11.4.1 and caused errors.
