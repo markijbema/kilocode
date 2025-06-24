@@ -128,7 +128,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 						setError(null)
 					})
 					.catch((err) => {
-						const errorMessage = err instanceof Error ? err.message : "Failed to render Mermaid diagram"
+						const errorMessage = err instanceof Error ? err.message : t("common:mermaid.render_error")
 						console.warn("Mermaid parse/render failed:", err)
 
 						if (hasAutoFixed || code !== originalCode || isFixing) {
@@ -202,7 +202,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 				return { success: true }
 			}
 
-			const errorMessage = fixResult.error || "Failed to fix Mermaid syntax"
+			const errorMessage = fixResult.error || t("common:mermaid.errors.fix_failed")
 			return { success: false, error: errorMessage }
 		} catch (fixError) {
 			console.warn("Fix failed:", fixError)
@@ -221,7 +221,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 		try {
 			const result = await handleSyntaxFix(originalCode)
 			if (!result.success) {
-				setError(result.error || "Failed to fix Mermaid syntax")
+				setError(result.error || t("common:mermaid.errors.fix_failed"))
 			}
 		} finally {
 			setIsFixing(false)
@@ -233,7 +233,9 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 	return (
 		<MermaidBlockContainer>
 			{(isLoading || isFixing) && (
-				<LoadingMessage>{isFixing ? "Fixing Mermaid syntax..." : t("common:mermaid.loading")}</LoadingMessage>
+				<LoadingMessage>
+					{isFixing ? t("common:mermaid.fixing_syntax") : t("common:mermaid.loading")}
+				</LoadingMessage>
 			)}
 
 			{error ? (
@@ -278,7 +280,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 										handleManualFix()
 									}}
 									disabled={isFixing}
-									title="Fix syntax with AI">
+									title={t("common:mermaid.fix_syntax_button")}>
 									<span className={`codicon codicon-${isFixing ? "loading" : "wand"}`}></span>
 								</FixButton>
 							)}
@@ -305,7 +307,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 								{error}
 								{hasAutoFixed && (
 									<div style={{ marginTop: "4px", fontSize: "0.9em", fontStyle: "italic" }}>
-										Note: This diagram was automatically fixed from the original syntax.
+										{t("common:mermaid.auto_fixed_note")}
 									</div>
 								)}
 							</div>
@@ -313,7 +315,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 							{hasAutoFixed && code !== originalCode && (
 								<div style={{ marginTop: "8px" }}>
 									<div style={{ marginBottom: "4px", fontSize: "0.9em", fontWeight: "bold" }}>
-										Original code:
+										{t("common:mermaid.original_code")}
 									</div>
 									<CodeBlock language="mermaid" source={originalCode} />
 								</div>
