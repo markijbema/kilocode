@@ -42,9 +42,6 @@ const MERMAID_THEME = {
 	fillType2: "#454545",
 }
 
-// Initialize mermaid once at the module level
-// This ensures consistent configuration across the application
-// The configuration above is used by all Mermaid diagrams in the application
 mermaid.initialize({
 	startOnLoad: false,
 	securityLevel: "loose",
