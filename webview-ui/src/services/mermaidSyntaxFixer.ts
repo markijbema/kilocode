@@ -37,52 +37,6 @@ export interface MermaidTheme {
 }
 
 /**
- * Initializes Mermaid with a consistent theme and configuration.
- * This should be called once at application startup or when the theme changes.
- */
-export function initializeMermaid(theme: MermaidTheme) {
-	mermaid.initialize({
-		startOnLoad: false,
-		securityLevel: "loose",
-		theme: "dark",
-		themeVariables: {
-			...theme,
-			fontSize: "16px",
-			fontFamily: "var(--vscode-font-family, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif)",
-
-			// Additional styling
-			noteTextColor: "#ffffff",
-			noteBkgColor: "#454545",
-			noteBorderColor: "#888888",
-
-			// Improve contrast for special elements
-			critBorderColor: "#ff9580",
-			critBkgColor: "#803d36",
-
-			// Task diagram specific
-			taskTextColor: "#ffffff",
-			taskTextOutsideColor: "#ffffff",
-			taskTextLightColor: "#ffffff",
-
-			// Numbers/sections
-			sectionBkgColor: "#2d2d2d",
-			sectionBkgColor2: "#3c3c3c",
-
-			// Alt sections in sequence diagrams
-			altBackground: "#2d2d2d",
-
-			// Links
-			linkColor: "#6cb6ff",
-
-			// Borders and lines
-			compositeBackground: "#2d2d2d",
-			compositeBorder: "#888888",
-			titleColor: "#ffffff",
-		},
-	})
-}
-
-/**
  * Service for validating and fixing Mermaid syntax using LLM assistance
  */
 export class MermaidSyntaxFixer {
@@ -122,7 +76,7 @@ export class MermaidSyntaxFixer {
 	/**
 	 * Attempts to fix invalid Mermaid syntax using LLM assistance
 	 */
-	static async fixSyntax(originalCode: string, error: string, _theme?: MermaidTheme): Promise<MermaidFixResult> {
+	static async fixSyntax(originalCode: string, error: string): Promise<MermaidFixResult> {
 		let currentCode = originalCode
 		let lastError = error
 
@@ -237,6 +191,6 @@ export class MermaidSyntaxFixer {
 		}
 
 		// If invalid, attempt to fix it with LLM
-		return this.fixSyntax(manuallyFixedCode, validation.error || "Unknown syntax error", theme)
+		return this.fixSyntax(manuallyFixedCode, validation.error || "Unknown syntax error")
 	}
 }

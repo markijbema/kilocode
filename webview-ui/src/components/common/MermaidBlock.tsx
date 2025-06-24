@@ -7,12 +7,11 @@ import { useAppTranslation } from "@src/i18n/TranslationContext"
 import { useCopyToClipboard } from "@src/utils/clipboard"
 import { MermaidSyntaxFixer } from "@src/services/mermaidSyntaxFixer"
 import CodeBlock from "./CodeBlock"
-import { MermaidButton } from "@/components/common/MermaidButton"
+import { MermaidButton } from "@src/components/common/MermaidButton"
 
 // Removed previous attempts at static imports for individual diagram types
 // as the paths were incorrect for Mermaid v11.4.1 and caused errors.
 // The primary strategy will now rely on Vite's bundling configuration.
-
 const MERMAID_THEME = {
 	background: "#1e1e1e", // VS Code dark theme background
 	textColor: "#ffffff", // Main text color
@@ -43,7 +42,9 @@ const MERMAID_THEME = {
 	fillType2: "#454545",
 }
 
-// Initialize mermaid with our theme
+// Initialize mermaid once at the module level
+// This ensures consistent configuration across the application
+// The configuration above is used by all Mermaid diagrams in the application
 mermaid.initialize({
 	startOnLoad: false,
 	securityLevel: "loose",
@@ -316,7 +317,7 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 					containerRef={containerRef}
 					code={code}
 					isLoading={isLoading || isFixing}
-					svgToPng={svgToPng}>
+					svgToPng={(svgEl) => svgToPng(svgEl, MERMAID_THEME.background)}>
 					<SvgContainer
 						onClick={handleClick}
 						ref={containerRef}
