@@ -89,14 +89,14 @@ interface MermaidBlockProps {
 	code: string
 }
 
-export default function MermaidBlock({ code }: MermaidBlockProps) {
+export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const [isLoading, setIsLoading] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 	const [isErrorExpanded, setIsErrorExpanded] = useState(false)
 	const [isFixing, setIsFixing] = useState(false)
 	const [fixAttempts, setFixAttempts] = useState(0)
-	const [currentCode, setCurrentCode] = useState(code)
+	const [code, setCurrentCode] = useState(originalCode)
 	const [hasAutoFixed, setHasAutoFixed] = useState(false)
 	const { showCopyFeedback, copyWithFeedback } = useCopyToClipboard()
 	const { t } = useAppTranslation()
@@ -105,10 +105,10 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 	useEffect(() => {
 		setIsLoading(true)
 		setError(null)
-		setCurrentCode(code)
+		setCurrentCode(originalCode)
 		setHasAutoFixed(false)
 		setFixAttempts(0)
-	}, [code])
+	}, [originalCode])
 
 	// 2) Debounce the actual parse/render with LLM-powered fixing
 	useDebounceEffect(
@@ -119,9 +119,9 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 				}
 
 				try {
-					await mermaid.parse(currentCode)
+					await mermaid.parse(code)
 					const id = `mermaid-${Math.random().toString(36).substring(2)}`
-					const { svg } = await mermaid.render(id, currentCode)
+					const { svg } = await mermaid.render(id, code)
 
 					if (containerRef.current) {
 						containerRef.current.innerHTML = svg
@@ -133,13 +133,13 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 					console.warn("Mermaid parse/render failed:", err)
 
 					// If we haven't tried auto-fixing yet and this is the original code, attempt LLM fix
-					if (!hasAutoFixed && currentCode === code && !isFixing) {
+					if (!hasAutoFixed && code === originalCode && !isFixing) {
 						setIsFixing(true)
 
 						try {
-							const fixResult = await MermaidSyntaxFixer.autoFixSyntax(currentCode)
+							const fixResult = await MermaidSyntaxFixer.autoFixSyntax(code)
 
-							if (fixResult.fixedCode && fixResult.fixedCode !== currentCode) {
+							if (fixResult.fixedCode && fixResult.fixedCode !== code) {
 								// Use the improved code even if not completely successful
 								setCurrentCode(fixResult.fixedCode)
 								setFixAttempts(fixResult.attempts || 0)
@@ -174,7 +174,7 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 			renderMermaid()
 		},
 		500, // Delay 500ms
-		[currentCode], // Dependencies for scheduling
+		[code], // Dependencies for scheduling
 	)
 
 	/**
@@ -205,7 +205,7 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 		setError(null)
 
 		try {
-			const fixResult = await MermaidSyntaxFixer.autoFixSyntax(code)
+			const fixResult = await MermaidSyntaxFixer.autoFixSyntax(originalCode)
 
 			if (fixResult.fixedCode) {
 				// Use the improved code even if not completely successful
@@ -286,7 +286,7 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 							<CopyButton
 								onClick={(e) => {
 									e.stopPropagation()
-									const codeToUse = hasAutoFixed ? currentCode : code
+									const codeToUse = hasAutoFixed ? code : originalCode
 									const combinedContent = `Error: ${error}\n\n\`\`\`mermaid\n${codeToUse}\n\`\`\``
 									copyWithFeedback(combinedContent, e)
 								}}>
@@ -310,13 +310,13 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 									</div>
 								)}
 							</div>
-							<CodeBlock language="mermaid" source={hasAutoFixed ? currentCode : code} />
-							{hasAutoFixed && currentCode !== code && (
+							<CodeBlock language="mermaid" source={hasAutoFixed ? code : originalCode} />
+							{hasAutoFixed && code !== originalCode && (
 								<div style={{ marginTop: "8px" }}>
 									<div style={{ marginBottom: "4px", fontSize: "0.9em", fontWeight: "bold" }}>
 										Original code:
 									</div>
-									<CodeBlock language="mermaid" source={code} />
+									<CodeBlock language="mermaid" source={originalCode} />
 								</div>
 							)}
 						</div>
@@ -325,7 +325,7 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 			) : (
 				<MermaidButton
 					containerRef={containerRef}
-					code={code}
+					code={originalCode}
 					isLoading={isLoading || isFixing}
 					svgToPng={(svgEl) => svgToPng(svgEl, MERMAID_THEME.background)}>
 					<SvgContainer
