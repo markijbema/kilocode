@@ -95,7 +95,6 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 	const [isErrorExpanded, setIsErrorExpanded] = useState(false)
 	// kilocode_change start
 	const [isFixing, setIsFixing] = useState(false)
-	const [fixAttempts, setFixAttempts] = useState(0)
 	const [code, setCurrentCode] = useState(originalCode)
 	const [hasAutoFixed, setHasAutoFixed] = useState(false)
 	// kilocode_change end
@@ -109,7 +108,6 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 		// kilocode_change start
 		setCurrentCode(originalCode)
 		setHasAutoFixed(false)
-		setFixAttempts(0)
 		// kilocode_change end
 	}, [originalCode])
 
@@ -268,12 +266,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 									fontSize: 16,
 									marginBottom: "-1.5px",
 								}}></span>
-							<span style={{ fontWeight: "bold" }}>
-								{t("common:mermaid.render_error")}
-								{/* kilocode_change start */}
-								{hasAutoFixed && ` (Auto-fixed after ${fixAttempts} attempts)`}
-								{/* kilocode_change end */}
-							</span>
+							<span style={{ fontWeight: "bold" }}>{t("common:mermaid.render_error")}</span>
 						</div>
 						<div style={{ display: "flex", alignItems: "center" }}>
 							{/* kilocode_change start */}
@@ -292,8 +285,10 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 							<CopyButton
 								onClick={(e) => {
 									e.stopPropagation()
+									// kilocode_change start
 									const codeToUse = hasAutoFixed ? code : originalCode
 									const combinedContent = `Error: ${error}\n\n\`\`\`mermaid\n${codeToUse}\n\`\`\``
+									// kilocode_change end
 									copyWithFeedback(combinedContent, e)
 								}}>
 								<span className={`codicon codicon-${showCopyFeedback ? "check" : "copy"}`}></span>
@@ -318,7 +313,10 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 								)}
 								{/* kilocode_change end */}
 							</div>
-							<CodeBlock language="mermaid" source={hasAutoFixed ? code : originalCode} />
+							<CodeBlock
+								language="mermaid"
+								source={hasAutoFixed /* kilocode_change */ ? code : originalCode}
+							/>
 							{/* kilocode_change start */}
 							{hasAutoFixed && code !== originalCode && (
 								<div style={{ marginTop: "8px" }}>
@@ -333,6 +331,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 					)}
 				</div>
 			) : (
+				// kilocode_change start : also check isFixing
 				<MermaidButton
 					containerRef={containerRef}
 					code={code}
@@ -343,6 +342,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 						ref={containerRef}
 						$isLoading={isLoading || isFixing}></SvgContainer>
 				</MermaidButton>
+				// kilocode_change end
 			)}
 		</MermaidBlockContainer>
 	)
