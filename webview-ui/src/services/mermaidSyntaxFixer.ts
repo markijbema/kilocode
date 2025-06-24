@@ -50,7 +50,7 @@ export class MermaidSyntaxFixer {
 	static async fixSyntax(originalCode: string, error: string): Promise<MermaidFixResult> {
 		let currentCode = originalCode
 		let lastError = error
-		let bestAttempt = originalCode // Track the best attempt so far
+		let bestAttempt = originalCode // Track the best attempt so far; fixedCode can be empty, so we cannot always use that
 
 		for (let attempt = 1; attempt <= this.MAX_FIX_ATTEMPTS; attempt++) {
 			try {
@@ -59,13 +59,12 @@ export class MermaidSyntaxFixer {
 				if (!fixedCode) {
 					return {
 						success: false,
-						fixedCode: bestAttempt, // Return the best attempt so far
+						fixedCode: bestAttempt,
 						error: "LLM failed to provide a fix",
 						attempts: attempt,
 					}
 				}
 
-				// Always update our best attempt with the latest fix
 				bestAttempt = fixedCode
 
 				const validation = await this.validateSyntax(fixedCode)
@@ -84,7 +83,7 @@ export class MermaidSyntaxFixer {
 			} catch (requestError) {
 				return {
 					success: false,
-					fixedCode: bestAttempt, // Return the best attempt so far
+					fixedCode: bestAttempt,
 					error: requestError instanceof Error ? requestError.message : "Fix request failed",
 					attempts: attempt,
 				}
@@ -93,7 +92,7 @@ export class MermaidSyntaxFixer {
 
 		return {
 			success: false,
-			fixedCode: bestAttempt, // Return the best attempt even after all attempts fail
+			fixedCode: bestAttempt,
 			error: `Failed to fix syntax after ${this.MAX_FIX_ATTEMPTS} attempts. Last error: ${lastError}`,
 			attempts: this.MAX_FIX_ATTEMPTS,
 		}
@@ -104,7 +103,7 @@ export class MermaidSyntaxFixer {
 	 */
 	private static async requestLLMFix(code: string, error: string, attempt: number): Promise<string | null> {
 		return new Promise((resolve, reject) => {
-			const requestId = `mermaid-fix-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+			const requestId = `mermaid-fix-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
 
 			const timeout = setTimeout(() => {
 				cleanup()
