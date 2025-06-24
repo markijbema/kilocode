@@ -202,20 +202,13 @@ describe("MermaidSyntaxFixer", () => {
 				// Mock successful validation after deterministic fixes
 				validateSyntaxSpy.mockResolvedValue({ isValid: true })
 
-				// Mock fixSyntax to return a successful result
-				fixSyntaxSpy.mockResolvedValue({
-					success: true,
-					fixedCode: "A --> B",
-					attempts: 0,
-				})
-
 				const result = await MermaidSyntaxFixer.autoFixSyntax("A --&gt; B")
 
 				expect(result.success).toBe(true)
 				expect(result.fixedCode).toBe("A --> B")
 				expect(result.attempts).toBe(0)
-				// fixSyntax should still be called even though validation passed
-				expect(fixSyntaxSpy).toHaveBeenCalled()
+				// fixSyntax should NOT be called when validation passes after deterministic fixes
+				expect(fixSyntaxSpy).not.toHaveBeenCalled()
 			})
 
 			it("should call fixSyntax when deterministic fixes are not sufficient", async () => {
