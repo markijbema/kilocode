@@ -5,13 +5,14 @@ import { useDebounceEffect } from "@src/utils/useDebounceEffect"
 import { vscode } from "@src/utils/vscode"
 import { useAppTranslation } from "@src/i18n/TranslationContext"
 import { useCopyToClipboard } from "@src/utils/clipboard"
-import { MermaidSyntaxFixer } from "@src/services/mermaidSyntaxFixer"
+import { MermaidSyntaxFixer } from "@src/services/mermaidSyntaxFixer" // kilocode_change
 import CodeBlock from "./CodeBlock"
 import { MermaidButton } from "@/components/common/MermaidButton"
 
 // Removed previous attempts at static imports for individual diagram types
 // as the paths were incorrect for Mermaid v11.4.1 and caused errors.
 // The primary strategy will now rely on Vite's bundling configuration.
+
 const MERMAID_THEME = {
 	background: "#1e1e1e", // VS Code dark theme background
 	textColor: "#ffffff", // Main text color
@@ -86,15 +87,18 @@ interface MermaidBlockProps {
 	code: string
 }
 
+// kilocode_change next line rename to originalCode to keep the difference with Roo smaller
 export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const [isLoading, setIsLoading] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 	const [isErrorExpanded, setIsErrorExpanded] = useState(false)
+	// kilocode_change start
 	const [isFixing, setIsFixing] = useState(false)
 	const [fixAttempts, setFixAttempts] = useState(0)
 	const [code, setCurrentCode] = useState(originalCode)
 	const [hasAutoFixed, setHasAutoFixed] = useState(false)
+	// kilocode_change end
 	const { showCopyFeedback, copyWithFeedback } = useCopyToClipboard()
 	const { t } = useAppTranslation()
 
@@ -102,20 +106,23 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 	useEffect(() => {
 		setIsLoading(true)
 		setError(null)
+		// kilocode_change start
 		setCurrentCode(originalCode)
 		setHasAutoFixed(false)
 		setFixAttempts(0)
+		// kilocode_change end
 	}, [originalCode])
 
 	// 2) Debounce the actual parse/render with LLM-powered fixing
 	useDebounceEffect(
 		() => {
+			// kilocode_change next line
 			const renderMermaid = async () => {
 				if (containerRef.current) {
 					containerRef.current.innerHTML = ""
 				}
 
-				return mermaid
+				return mermaid // kilocode_change
 					.parse(code)
 					.then(() => {
 						const id = `mermaid-${Math.random().toString(36).substring(2)}`
@@ -125,9 +132,10 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 						if (containerRef.current) {
 							containerRef.current.innerHTML = svg
 						}
-						setError(null)
+						setError(null) // kilocode_change
 					})
 					.catch((err) => {
+						// kilocode_change start
 						const errorMessage = err instanceof Error ? err.message : t("common:mermaid.render_error")
 						console.warn("Mermaid parse/render failed:", err)
 
@@ -148,11 +156,14 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 
 							return attemptFix()
 						}
+						// kilocode_change end
 					})
 					.finally(() => {
+						// kilocode_change start
 						if (!isFixing) {
 							setIsLoading(false)
 						}
+						// kilocode_change end
 					})
 			}
 
@@ -182,6 +193,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 		}
 	}
 
+	// kilocode_change start
 	const handleSyntaxFix = async (codeToFix: string): Promise<{ success: boolean; error?: string }> => {
 		if (isFixing) return { success: false, error: "Already fixing" }
 
@@ -215,14 +227,15 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 		}
 		setIsFixing(false)
 	}
+	// kilocode_change end
 
 	// Copy functionality handled directly through the copyWithFeedback utility
 
 	return (
 		<MermaidBlockContainer>
-			{(isLoading || isFixing) && (
+			{(isLoading || isFixing) /* kilocode_change */ && (
 				<LoadingMessage>
-					{isFixing ? t("common:mermaid.fixing_syntax") : t("common:mermaid.loading")}
+					{isFixing /* kilocode_change */ ? t("common:mermaid.fixing_syntax") : t("common:mermaid.loading")}
 				</LoadingMessage>
 			)}
 
@@ -257,10 +270,13 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 								}}></span>
 							<span style={{ fontWeight: "bold" }}>
 								{t("common:mermaid.render_error")}
+								{/* kilocode_change start */}
 								{hasAutoFixed && ` (Auto-fixed after ${fixAttempts} attempts)`}
+								{/* kilocode_change end */}
 							</span>
 						</div>
 						<div style={{ display: "flex", alignItems: "center" }}>
+							{/* kilocode_change start */}
 							{!hasAutoFixed && (
 								<FixButton
 									onClick={(e) => {
@@ -272,6 +288,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 									<span className={`codicon codicon-${isFixing ? "loading" : "wand"}`}></span>
 								</FixButton>
 							)}
+							{/* kilocode_change end */}
 							<CopyButton
 								onClick={(e) => {
 									e.stopPropagation()
@@ -293,13 +310,16 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 							}}>
 							<div style={{ marginBottom: "8px", color: "var(--vscode-descriptionForeground)" }}>
 								{error}
+								{/* kilocode_change start */}
 								{hasAutoFixed && (
 									<div style={{ marginTop: "4px", fontSize: "0.9em", fontStyle: "italic" }}>
 										{t("common:mermaid.auto_fixed_note")}
 									</div>
 								)}
+								{/* kilocode_change end */}
 							</div>
 							<CodeBlock language="mermaid" source={hasAutoFixed ? code : originalCode} />
+							{/* kilocode_change start */}
 							{hasAutoFixed && code !== originalCode && (
 								<div style={{ marginTop: "8px" }}>
 									<div style={{ marginBottom: "4px", fontSize: "0.9em", fontWeight: "bold" }}>
@@ -308,6 +328,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 									<CodeBlock language="mermaid" source={originalCode} />
 								</div>
 							)}
+							{/* kilocode_change end */}
 						</div>
 					)}
 				</div>
@@ -413,6 +434,7 @@ const CopyButton = styled.button`
 	}
 `
 
+// kilocode_change start
 const FixButton = styled.button`
 	padding: 3px;
 	height: 24px;
@@ -449,6 +471,7 @@ const FixButton = styled.button`
 		}
 	}
 `
+// kilocode_change end
 
 interface SvgContainerProps {
 	$isLoading: boolean

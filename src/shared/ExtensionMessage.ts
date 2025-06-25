@@ -107,7 +107,7 @@ export interface ExtensionMessage {
 		| "rulesData" // kilocode_change
 		| "marketplaceInstallResult"
 		| "marketplaceData"
-		| "mermaidFixResponse"
+		| "mermaidFixResponse" // kilocode_change
 	text?: string
 	payload?: ProfileDataResponsePayload | BalanceDataResponsePayload // kilocode_change: Add payload for profile and balance data
 	action?:
@@ -170,7 +170,7 @@ export interface ExtensionMessage {
 	localWorkflows?: ClineRulesToggles
 	marketplaceItems?: MarketplaceItem[]
 	marketplaceInstalledMetadata?: MarketplaceInstalledMetadata
-	fixedCode?: string | null // For mermaidFixResponse
+	fixedCode?: string | null // For mermaidFixResponse // kilocode_change
 }
 
 export type ExtensionState = Pick<
