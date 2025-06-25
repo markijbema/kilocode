@@ -5,13 +5,13 @@ import { useDebounceEffect } from "@src/utils/useDebounceEffect"
 import { vscode } from "@src/utils/vscode"
 import { useAppTranslation } from "@src/i18n/TranslationContext"
 import { useCopyToClipboard } from "@src/utils/clipboard"
+import { MermaidSyntaxFixer } from "@src/services/mermaidSyntaxFixer"
 import CodeBlock from "./CodeBlock"
 import { MermaidButton } from "@/components/common/MermaidButton"
 
 // Removed previous attempts at static imports for individual diagram types
 // as the paths were incorrect for Mermaid v11.4.1 and caused errors.
 // The primary strategy will now rely on Vite's bundling configuration.
-
 const MERMAID_THEME = {
 	background: "#1e1e1e", // VS Code dark theme background
 	textColor: "#ffffff", // Main text color
@@ -86,11 +86,15 @@ interface MermaidBlockProps {
 	code: string
 }
 
-export default function MermaidBlock({ code }: MermaidBlockProps) {
+export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const [isLoading, setIsLoading] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 	const [isErrorExpanded, setIsErrorExpanded] = useState(false)
+	const [isFixing, setIsFixing] = useState(false)
+	const [fixAttempts, setFixAttempts] = useState(0)
+	const [code, setCurrentCode] = useState(originalCode)
+	const [hasAutoFixed, setHasAutoFixed] = useState(false)
 	const { showCopyFeedback, copyWithFeedback } = useCopyToClipboard()
 	const { t } = useAppTranslation()
 
@@ -98,33 +102,64 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 	useEffect(() => {
 		setIsLoading(true)
 		setError(null)
-	}, [code])
+		setCurrentCode(originalCode)
+		setHasAutoFixed(false)
+		setFixAttempts(0)
+	}, [originalCode])
 
-	// 2) Debounce the actual parse/render
+	// 2) Debounce the actual parse/render with LLM-powered fixing
 	useDebounceEffect(
 		() => {
-			if (containerRef.current) {
-				containerRef.current.innerHTML = ""
+			const renderMermaid = async () => {
+				if (containerRef.current) {
+					containerRef.current.innerHTML = ""
+				}
+
+				return mermaid
+					.parse(code)
+					.then(() => {
+						const id = `mermaid-${Math.random().toString(36).substring(2)}`
+						return mermaid.render(id, code)
+					})
+					.then(({ svg }) => {
+						if (containerRef.current) {
+							containerRef.current.innerHTML = svg
+						}
+						setError(null)
+					})
+					.catch((err) => {
+						const errorMessage = err instanceof Error ? err.message : t("common:mermaid.render_error")
+						console.warn("Mermaid parse/render failed:", err)
+
+						if (hasAutoFixed || code !== originalCode || isFixing) {
+							setError(errorMessage)
+						} else {
+							// If we haven't tried auto-fixing yet and this is the original code, attempt LLM fix
+							setIsFixing(true)
+
+							// Use a separate async function to handle the fix
+							const attemptFix = async () => {
+								try {
+									const result = await handleSyntaxFix(code)
+									if (!result.success) {
+										setError(result.error || errorMessage)
+									}
+								} finally {
+									setIsFixing(false)
+								}
+							}
+
+							return attemptFix()
+						}
+					})
+					.finally(() => {
+						if (!isFixing) {
+							setIsLoading(false)
+						}
+					})
 			}
 
-			mermaid
-				.parse(code)
-				.then(() => {
-					const id = `mermaid-${Math.random().toString(36).substring(2)}`
-					return mermaid.render(id, code)
-				})
-				.then(({ svg }) => {
-					if (containerRef.current) {
-						containerRef.current.innerHTML = svg
-					}
-				})
-				.catch((err) => {
-					console.warn("Mermaid parse/render failed:", err)
-					setError(err.message || "Failed to render Mermaid diagram")
-				})
-				.finally(() => {
-					setIsLoading(false)
-				})
+			renderMermaid()
 		},
 		500, // Delay 500ms
 		[code], // Dependencies for scheduling
@@ -150,11 +185,58 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 		}
 	}
 
+	const handleSyntaxFix = async (codeToFix: string): Promise<{ success: boolean; error?: string }> => {
+		if (isFixing) return { success: false, error: "Already fixing" }
+
+		try {
+			const fixResult = await MermaidSyntaxFixer.autoFixSyntax(codeToFix)
+
+			if (fixResult.fixedCode) {
+				// Use the improved code even if not completely successful
+				setCurrentCode(fixResult.fixedCode)
+				setFixAttempts(fixResult.attempts || 0)
+			}
+
+			if (fixResult.success) {
+				setHasAutoFixed(true)
+				return { success: true }
+			}
+
+			const errorMessage = fixResult.error || t("common:mermaid.errors.fix_failed")
+			return { success: false, error: errorMessage }
+		} catch (fixError) {
+			console.warn("Fix failed:", fixError)
+			const errorMessage = fixError instanceof Error ? fixError.message : "Fix request failed"
+			return { success: false, error: errorMessage }
+		}
+	}
+
+	// Manual fix function
+	const handleManualFix = async () => {
+		if (isFixing) return
+
+		setIsFixing(true)
+		setError(null)
+
+		try {
+			const result = await handleSyntaxFix(originalCode)
+			if (!result.success) {
+				setError(result.error || t("common:mermaid.errors.fix_failed"))
+			}
+		} finally {
+			setIsFixing(false)
+		}
+	}
+
 	// Copy functionality handled directly through the copyWithFeedback utility
 
 	return (
 		<MermaidBlockContainer>
-			{isLoading && <LoadingMessage>{t("common:mermaid.loading")}</LoadingMessage>}
+			{(isLoading || isFixing) && (
+				<LoadingMessage>
+					{isFixing ? t("common:mermaid.fixing_syntax") : t("common:mermaid.loading")}
+				</LoadingMessage>
+			)}
 
 			{error ? (
 				<div style={{ marginTop: "0px", overflow: "hidden", marginBottom: "8px" }}>
@@ -185,13 +267,28 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 									fontSize: 16,
 									marginBottom: "-1.5px",
 								}}></span>
-							<span style={{ fontWeight: "bold" }}>{t("common:mermaid.render_error")}</span>
+							<span style={{ fontWeight: "bold" }}>
+								{t("common:mermaid.render_error")}
+								{hasAutoFixed && ` (Auto-fixed after ${fixAttempts} attempts)`}
+							</span>
 						</div>
 						<div style={{ display: "flex", alignItems: "center" }}>
+							{!hasAutoFixed && (
+								<FixButton
+									onClick={(e) => {
+										e.stopPropagation()
+										handleManualFix()
+									}}
+									disabled={isFixing}
+									title={t("common:mermaid.fix_syntax_button")}>
+									<span className={`codicon codicon-${isFixing ? "loading" : "wand"}`}></span>
+								</FixButton>
+							)}
 							<CopyButton
 								onClick={(e) => {
 									e.stopPropagation()
-									const combinedContent = `Error: ${error}\n\n\`\`\`mermaid\n${code}\n\`\`\``
+									const codeToUse = hasAutoFixed ? code : originalCode
+									const combinedContent = `Error: ${error}\n\n\`\`\`mermaid\n${codeToUse}\n\`\`\``
 									copyWithFeedback(combinedContent, e)
 								}}>
 								<span className={`codicon codicon-${showCopyFeedback ? "check" : "copy"}`}></span>
@@ -208,14 +305,34 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 							}}>
 							<div style={{ marginBottom: "8px", color: "var(--vscode-descriptionForeground)" }}>
 								{error}
+								{hasAutoFixed && (
+									<div style={{ marginTop: "4px", fontSize: "0.9em", fontStyle: "italic" }}>
+										{t("common:mermaid.auto_fixed_note")}
+									</div>
+								)}
 							</div>
-							<CodeBlock language="mermaid" source={code} />
+							<CodeBlock language="mermaid" source={hasAutoFixed ? code : originalCode} />
+							{hasAutoFixed && code !== originalCode && (
+								<div style={{ marginTop: "8px" }}>
+									<div style={{ marginBottom: "4px", fontSize: "0.9em", fontWeight: "bold" }}>
+										{t("common:mermaid.original_code")}
+									</div>
+									<CodeBlock language="mermaid" source={originalCode} />
+								</div>
+							)}
 						</div>
 					)}
 				</div>
 			) : (
-				<MermaidButton containerRef={containerRef} code={code} isLoading={isLoading} svgToPng={svgToPng}>
-					<SvgContainer onClick={handleClick} ref={containerRef} $isLoading={isLoading}></SvgContainer>
+				<MermaidButton
+					containerRef={containerRef}
+					code={code}
+					isLoading={isLoading || isFixing}
+					svgToPng={svgToPng}>
+					<SvgContainer
+						onClick={handleClick}
+						ref={containerRef}
+						$isLoading={isLoading || isFixing}></SvgContainer>
 				</MermaidButton>
 			)}
 		</MermaidBlockContainer>
@@ -305,6 +422,43 @@ const CopyButton = styled.button`
 
 	&:hover {
 		opacity: 0.8;
+	}
+`
+
+const FixButton = styled.button`
+	padding: 3px;
+	height: 24px;
+	margin-right: 4px;
+	color: var(--vscode-editor-foreground);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: transparent;
+	border: none;
+	cursor: pointer;
+
+	&:hover {
+		opacity: 0.8;
+		color: var(--vscode-button-foreground);
+		background: var(--vscode-button-hoverBackground);
+	}
+
+	&:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.codicon-loading {
+		animation: spin 1s linear infinite;
+	}
+
+	@keyframes spin {
+		from {
+			transform: rotate(0deg);
+		}
+		to {
+			transform: rotate(360deg);
+		}
 	}
 `
 

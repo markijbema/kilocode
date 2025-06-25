@@ -204,6 +204,8 @@ export interface WebviewMessage {
 		| "switchTab"
 		| "telemetrySetting"
 		| "profileThresholds"
+		| "fixMermaidSyntax"
+		| "mermaidFixResponse"
 	text?: string
 	tab?: "settings" | "history" | "mcp" | "modes" | "chat" | "marketplace" | "account"
 	disabled?: boolean
