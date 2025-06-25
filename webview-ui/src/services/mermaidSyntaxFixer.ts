@@ -23,7 +23,8 @@ export class MermaidSyntaxFixer {
 	 * Applies deterministic fixes for common LLM errors before validation
 	 */
 	static applyDeterministicFixes(code: string): string {
-		// Fix HTML entity encoding: --&gt; should be -->
+		// Fix HTML entity encoding: --&gt; should be -->;
+		// surprisingly, this does most of the heavy lifting in the MermaidSyntaxFixer
 		return code.replace(/--&gt;/g, "-->")
 	}
 
