@@ -110,14 +110,14 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 		// kilocode_change end
 	}, [originalCode])
 
+	// kilocode_change start
 	useEffect(
 		() => {
-			// kilocode_change next line
 			if (containerRef.current) {
 				containerRef.current.innerHTML = ""
 			}
 
-			mermaid // kilocode_change
+			mermaid
 				.parse(code)
 				.then(() => {
 					console.info("hello there")
@@ -128,10 +128,9 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 					if (containerRef.current) {
 						containerRef.current.innerHTML = svg
 					}
-					setError(null) // kilocode_change
+					setError(null)
 				})
 				.catch((err) => {
-					// kilocode_change start
 					const errorMessage = err instanceof Error ? err.message : t("common:mermaid.render_error")
 					console.warn("Mermaid parse/render failed:", err)
 
@@ -142,18 +141,16 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 							// handleManualFix()
 						}
 					}
-					// kilocode_change end
 				})
 				.finally(() => {
-					// kilocode_change start
 					if (!isFixing) {
 						setIsLoading(false)
 					}
-					// kilocode_change end
 				})
 		},
 		[code, hasAutoFixed, isFixing, originalCode, t], // Dependencies for scheduling
 	)
+	// kilocode_change end
 
 	/**
 	 * Called when user clicks the rendered diagram.
