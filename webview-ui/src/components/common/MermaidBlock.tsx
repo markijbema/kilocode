@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import mermaid from "mermaid"
 import styled from "styled-components"
 import { vscode } from "@src/utils/vscode"
@@ -97,7 +97,6 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 	// kilocode_change start
 	const [isFixing, setIsFixing] = useState(false)
 	const [code, setCode] = useState("")
-	const [hasAutoFixed, setHasAutoFixed] = useState(false)
 	// kilocode_change end
 	const { showCopyFeedback, copyWithFeedback } = useCopyToClipboard()
 	const { t } = useAppTranslation()
@@ -111,7 +110,6 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 			// kilocode_change start
 			setCode(originalCode)
 			setIsFixing(false)
-			setHasAutoFixed(false)
 			setIsBuffering(false)
 			// kilocode_change end
 		},
@@ -120,29 +118,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 	)
 
 	// kilocode_change start
-	const handleManualFix = useCallback(async () => {
-		if (isFixing) return
-
-		console.info("start fixing")
-		setIsFixing(true)
-		const result = await MermaidSyntaxFixer.autoFixSyntax(code)
-		if (result.fixedCode) {
-			console.info("fixed code", result.fixedCode !== code)
-			// Use the improved code even if not completely successful
-			setCode(result.fixedCode)
-		}
-
-		if (!result.success) {
-			console.info("failed fixing")
-			setError(result.error || t("common:mermaid.errors.fix_failed"))
-		}
-
-		console.info("end fixing")
-
-		setIsFixing(false)
-	}, [code, isFixing, t])
-
-	const handleManualFix2 = async () => {
+	const handleManualFix = async () => {
 		if (isFixing) return
 
 		console.info("start fixing")
@@ -187,14 +163,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 					setError(null)
 					console.info("effect success")
 					if (containerRef.current) {
-						console.info("actually doing something", [
-							code.length,
-							hasAutoFixed,
-							isFixing,
-							originalCode.length,
-							t,
-							handleManualFix,
-						])
+						console.info("actually doing something", [code.length, isFixing, originalCode.length, t])
 						containerRef.current.innerHTML = svg
 					} else {
 						console.info("i am just confusing")
@@ -202,16 +171,12 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 				})
 				.catch((err) => {
 					console.info("effect error path, isFixing: " + isFixing)
-					console.info("parameters", [code.length, hasAutoFixed, isFixing, originalCode.length, t])
+					console.info("parameters", [code.length, isFixing, originalCode.length, t])
 					const errorMessage = err instanceof Error ? err.message : t("common:mermaid.render_error")
 					console.warn("Mermaid parse/render failed:", err)
 
 					if (!isFixing) {
 						setError(errorMessage)
-						if (!hasAutoFixed) {
-							setHasAutoFixed(true)
-							// handleManualFix()
-						}
 					}
 				})
 				.finally(() => {
@@ -221,7 +186,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 				})
 		},
 		// 1500, // Delay 500ms
-		[code, hasAutoFixed, isFixing, originalCode, t, handleManualFix, isBuffering], // Dependencies for scheduling
+		[code, isFixing, originalCode, t, isBuffering], // Dependencies for scheduling
 	)
 	// kilocode_change end
 
@@ -288,7 +253,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 						</div>
 						<div style={{ display: "flex", alignItems: "center" }}>
 							{/* kilocode_change start */}
-							{hasAutoFixed && !!error && (
+							{!!error && (
 								<FixButton
 									onClick={(e) => {
 										e.stopPropagation()
@@ -304,8 +269,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 								onClick={(e) => {
 									e.stopPropagation()
 									// kilocode_change start
-									const codeToUse = hasAutoFixed ? code : originalCode
-									const combinedContent = `Error: ${error}\n\n\`\`\`mermaid\n${codeToUse}\n\`\`\``
+									const combinedContent = `Error: ${error}\n\n\`\`\`mermaid\n${code}\n\`\`\``
 									// kilocode_change end
 									copyWithFeedback(combinedContent, e)
 								}}>
@@ -323,20 +287,10 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 							}}>
 							<div style={{ marginBottom: "8px", color: "var(--vscode-descriptionForeground)" }}>
 								{error}
-								{/* kilocode_change start */}
-								{hasAutoFixed && (
-									<div style={{ marginTop: "4px", fontSize: "0.9em", fontStyle: "italic" }}>
-										{t("common:mermaid.auto_fixed_note")}
-									</div>
-								)}
-								{/* kilocode_change end */}
 							</div>
-							<CodeBlock
-								language="mermaid"
-								source={hasAutoFixed /* kilocode_change */ ? code : originalCode}
-							/>
+							<CodeBlock language="mermaid" source={code} />
 							{/* kilocode_change start */}
-							{hasAutoFixed && code !== originalCode && (
+							{code !== originalCode && (
 								<div style={{ marginTop: "8px" }}>
 									<div style={{ marginBottom: "4px", fontSize: "0.9em", fontWeight: "bold" }}>
 										{t("common:mermaid.original_code")}
