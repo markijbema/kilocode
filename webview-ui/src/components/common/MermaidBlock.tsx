@@ -7,6 +7,7 @@ import { useCopyToClipboard } from "@src/utils/clipboard"
 import { MermaidSyntaxFixer } from "@src/services/mermaidSyntaxFixer" // kilocode_change
 import CodeBlock from "./CodeBlock"
 import { MermaidButton } from "@/components/common/MermaidButton"
+import { useDebounceEffect } from "@/utils/useDebounceEffect"
 
 // Removed previous attempts at static imports for individual diagram types
 // as the paths were incorrect for Mermaid v11.4.1 and caused errors.
@@ -134,7 +135,9 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 	// kilocode_change end
 
 	// kilocode_change start
-	useEffect(
+	// 2) Debounce the actual parse/render; the LLM is still 'typing', and we do not want to start
+	//.   rendering and/or autofixing before it is fully done
+	useDebounceEffect(
 		() => {
 			if (isFixing) {
 				return
@@ -163,6 +166,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 				})
 				.catch((err) => {
 					console.info("effect error path, isFixing: " + isFixing)
+					console.info("parameters", [code.length, hasAutoFixed, isFixing, originalCode.length, t])
 					const errorMessage = err instanceof Error ? err.message : t("common:mermaid.render_error")
 					console.warn("Mermaid parse/render failed:", err)
 
@@ -180,6 +184,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 					}
 				})
 		},
+		500, // Delay 500ms
 		[code, hasAutoFixed, isFixing, originalCode, t, handleManualFix], // Dependencies for scheduling
 	)
 	// kilocode_change end
