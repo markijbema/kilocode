@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import mermaid from "mermaid"
 import styled from "styled-components"
 import { vscode } from "@src/utils/vscode"
@@ -111,8 +111,35 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 	}, [originalCode])
 
 	// kilocode_change start
+	const handleManualFix = useCallback(async () => {
+		if (isFixing) return
+
+		console.info("start fixing")
+
+		setIsFixing(true)
+		const result = await MermaidSyntaxFixer.autoFixSyntax(code)
+		if (result.fixedCode) {
+			// Use the improved code even if not completely successful
+			setCode(result.fixedCode)
+		}
+
+		if (!result.success) {
+			setError(result.error || t("common:mermaid.errors.fix_failed"))
+		}
+
+		console.info("end fixing")
+
+		setIsFixing(false)
+	}, [code, isFixing, t])
+	// kilocode_change end
+
+	// kilocode_change start
 	useEffect(
 		() => {
+			if (isFixing) {
+				return
+			}
+
 			if (containerRef.current) {
 				containerRef.current.innerHTML = ""
 			}
@@ -143,7 +170,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 						setError(errorMessage)
 						if (!hasAutoFixed) {
 							setHasAutoFixed(true)
-							// handleManualFix()
+							handleManualFix()
 						}
 					}
 				})
@@ -153,7 +180,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 					}
 				})
 		},
-		[code, hasAutoFixed, isFixing, originalCode, t], // Dependencies for scheduling
+		[code, hasAutoFixed, isFixing, originalCode, t, handleManualFix], // Dependencies for scheduling
 	)
 	// kilocode_change end
 
@@ -176,24 +203,6 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 			console.error("Error converting SVG to PNG:", err)
 		}
 	}
-
-	// kilocode_change start
-	const handleManualFix = async () => {
-		if (isFixing) return
-
-		setIsFixing(true)
-		const result = await MermaidSyntaxFixer.autoFixSyntax(code)
-		if (result.fixedCode) {
-			// Use the improved code even if not completely successful
-			setCode(result.fixedCode)
-		}
-
-		if (!result.success) {
-			setError(result.error || t("common:mermaid.errors.fix_failed"))
-		}
-		setIsFixing(false)
-	}
-	// kilocode_change end
 
 	// Copy functionality handled directly through the copyWithFeedback utility
 
