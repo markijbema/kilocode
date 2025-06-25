@@ -130,8 +130,9 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 		setIsLoading(false)
 	}
 
-	// 2) Debounce the actual parse/render; the LLM is still 'typing', and we do not want to start
-	//.   rendering and/or autofixing before it is fully done. We start the process when we copy originalCode to code
+	// 2) Debounce the actual parse/render
+	// the LLM is still 'typing', and we do not want to start
+	// rendering and/or autofixing before it is fully done. We start the process when we copy originalCode to code
 	useDebounceEffect(
 		() => {
 			if (isFixing) return
