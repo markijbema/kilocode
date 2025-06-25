@@ -96,7 +96,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 	const [isErrorExpanded, setIsErrorExpanded] = useState(false)
 	// kilocode_change start
 	const [isFixing, setIsFixing] = useState(false)
-	const [code, setCode] = useState(originalCode)
+	const [code, setCode] = useState("")
 	const [hasAutoFixed, setHasAutoFixed] = useState(false)
 	// kilocode_change end
 	const { showCopyFeedback, copyWithFeedback } = useCopyToClipboard()
@@ -210,7 +210,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 						setError(errorMessage)
 						if (!hasAutoFixed) {
 							setHasAutoFixed(true)
-							handleManualFix()
+							// handleManualFix()
 						}
 					}
 				})
