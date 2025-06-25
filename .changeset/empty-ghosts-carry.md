@@ -2,4 +2,4 @@
 "kilo-code": patch
 ---
 
-fix mermaid syntax errors automatically by calling the LLM
+add a button to fix mermaid syntax errors by calling the LLM
