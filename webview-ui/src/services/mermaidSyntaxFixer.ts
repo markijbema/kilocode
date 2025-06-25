@@ -25,6 +25,7 @@ export class MermaidSyntaxFixer {
 	static applyDeterministicFixes(code: string): string {
 		// Fix HTML entity encoding: --&gt; should be -->;
 		// surprisingly, this does most of the heavy lifting in the MermaidSyntaxFixer
+		// sometimes the llm prepends ```mermaid, remove that
 		return code.replace(/--&gt;/g, "-->").replace(/```mermaid/, "")
 	}
 
