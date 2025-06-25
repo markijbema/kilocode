@@ -47,13 +47,16 @@ export class MermaidSyntaxFixer {
 	/**
 	 * Requests the LLM to fix the Mermaid syntax via the extension
 	 */
-	private static requestLLMFix(code: string, error: string): Promise<string | null> {
-		return new Promise((resolve, reject) => {
+	private static requestLLMFix(
+		code: string,
+		error: string,
+	): Promise<{ fixedCode: string } | { requestError: string }> {
+		return new Promise((resolve, _reject) => {
 			const requestId = `mermaid-fix-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
 
 			const timeout = setTimeout(() => {
 				cleanup()
-				reject(new Error("LLM fix request timed out"))
+				resolve({ requestError: "LLM fix request timed out" })
 			}, this.FIX_TIMEOUT)
 
 			const messageListener = (event: MessageEvent) => {
@@ -62,9 +65,9 @@ export class MermaidSyntaxFixer {
 					cleanup()
 
 					if (message.success) {
-						resolve(message.fixedCode)
+						resolve({ fixedCode: message.fixedCode })
 					} else {
-						reject(new Error(message.error || "LLM fix failed"))
+						resolve({ requestError: message.error || "LLM fix failed" })
 					}
 				}
 			}
@@ -115,19 +118,14 @@ export class MermaidSyntaxFixer {
 				break
 			}
 
-			try {
-				llmAttempts++
-				const fixedCode = await this.requestLLMFix(currentCode, lastError)
+			llmAttempts++
+			const result = await this.requestLLMFix(currentCode, lastError)
 
-				if (!fixedCode) {
-					finalError = "LLM failed to provide a fix"
-					break
-				}
-
-				currentCode = fixedCode
-			} catch (requestError) {
-				finalError = requestError instanceof Error ? requestError.message : "Fix request failed"
+			if ("requestError" in result) {
+				finalError = result.requestError
 				break
+			} else {
+				currentCode = result.fixedCode
 			}
 		}
 
