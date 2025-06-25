@@ -120,17 +120,22 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 			mermaid
 				.parse(code)
 				.then(() => {
-					console.info("hello there")
+					console.info("start of effect")
 					const id = `mermaid-${Math.random().toString(36).substring(2)}`
 					return mermaid.render(id, code)
 				})
 				.then(({ svg }) => {
-					if (containerRef.current) {
-						containerRef.current.innerHTML = svg
-					}
 					setError(null)
+					console.info("effect success")
+					if (containerRef.current) {
+						console.info("actually doing something")
+						containerRef.current.innerHTML = svg
+					} else {
+						console.info("i am just confusing")
+					}
 				})
 				.catch((err) => {
+					console.info("effect error path, isFixing: " + isFixing)
 					const errorMessage = err instanceof Error ? err.message : t("common:mermaid.render_error")
 					console.warn("Mermaid parse/render failed:", err)
 
@@ -200,7 +205,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 				</LoadingMessage>
 			)}
 
-			{error ? (
+			{error && (
 				<div style={{ marginTop: "0px", overflow: "hidden", marginBottom: "8px" }}>
 					<div
 						style={{
@@ -293,7 +298,8 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 						</div>
 					)}
 				</div>
-			) : (
+			)}
+			{
 				// kilocode_change start : also check isFixing
 				<MermaidButton
 					containerRef={containerRef}
@@ -306,7 +312,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 						$isLoading={isLoading || isFixing}></SvgContainer>
 				</MermaidButton>
 				// kilocode_change end
-			)}
+			}
 		</MermaidBlockContainer>
 	)
 }
