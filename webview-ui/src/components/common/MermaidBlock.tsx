@@ -133,11 +133,12 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 					const errorMessage = err instanceof Error ? err.message : t("common:mermaid.render_error")
 					console.warn("Mermaid parse/render failed:", err)
 
-					if (hasAutoFixed || code !== originalCode || isFixing) {
+					if (!isFixing) {
 						setError(errorMessage)
-					} else {
-						setHasAutoFixed(true)
-						// handleManualFix()
+						if (!hasAutoFixed) {
+							setHasAutoFixed(true)
+							// handleManualFix()
+						}
 					}
 					// kilocode_change end
 				})
