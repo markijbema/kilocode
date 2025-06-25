@@ -139,25 +139,8 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 					if (hasAutoFixed || code !== originalCode || isFixing) {
 						setError(errorMessage)
 					} else {
-						// If we haven't tried auto-fixing yet and this is the original code, attempt LLM fix
-						setIsFixing(true)
-
-						// Use a separate async function to handle the fix
-						const attemptFix = async () => {
-							const result = await MermaidSyntaxFixer.autoFixSyntax(code)
-							if (result.fixedCode) {
-								// Use the improved code even if not completely successful
-								setCurrentCode(result.fixedCode)
-							}
-
-							if (!result.success) {
-								setError(result.error || errorMessage)
-							}
-							setHasAutoFixed(true)
-							setIsFixing(false)
-						}
-
-						return attemptFix()
+						setHasAutoFixed(true)
+						handleManualFix()
 					}
 					// kilocode_change end
 				})
@@ -198,8 +181,6 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 		if (isFixing) return
 
 		setIsFixing(true)
-		setError(null)
-
 		const result = await MermaidSyntaxFixer.autoFixSyntax(code)
 		if (result.fixedCode) {
 			// Use the improved code even if not completely successful
