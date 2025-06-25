@@ -192,7 +192,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 
 	return (
 		<MermaidBlockContainer>
-			{(isLoading || isFixing) /* kilocode_change */ && (
+			{isLoading && (
 				<LoadingMessage>
 					{isFixing /* kilocode_change */ ? t("common:mermaid.fixing_syntax") : t("common:mermaid.loading")}
 				</LoadingMessage>
@@ -246,9 +246,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 							<CopyButton
 								onClick={(e) => {
 									e.stopPropagation()
-									// kilocode_change start
 									const combinedContent = `Error: ${error}\n\n\`\`\`mermaid\n${code}\n\`\`\``
-									// kilocode_change end
 									copyWithFeedback(combinedContent, e)
 								}}>
 								<span className={`codicon codicon-${showCopyFeedback ? "check" : "copy"}`}></span>
