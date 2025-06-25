@@ -156,10 +156,11 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 					}
 				})
 				.catch((err) => {
-					const errorMessage = err instanceof Error ? err.message : t("common:mermaid.render_error")
 					console.warn("Mermaid parse/render failed:", err)
-
+					// kilocode_change start
+					const errorMessage = err instanceof Error ? err.message : t("common:mermaid.render_error")
 					setError(errorMessage)
+					// kilocode_change end
 				})
 				.finally(() => {
 					setIsLoading(false)
