@@ -101,21 +101,15 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 	const { showCopyFeedback, copyWithFeedback } = useCopyToClipboard()
 	const { t } = useAppTranslation()
 
-	// 2) Debounce the actual parse/render; the LLM is still 'typing', and we do not want to start
-	//.   rendering and/or autofixing before it is fully done. We start the process when we copy originalCode to code
-	useDebounceEffect(
-		() => {
-			setIsLoading(true)
-			setError(null)
-			// kilocode_change start
-			setCode(originalCode)
-			setIsFixing(false)
-			setIsBuffering(false)
-			// kilocode_change end
-		},
-		1500,
-		[originalCode],
-	)
+	useEffect(() => {
+		setIsLoading(true)
+		setError(null)
+		// kilocode_change start
+		setCode(originalCode)
+		setIsFixing(false)
+		setIsBuffering(false)
+		// kilocode_change end
+	}, [originalCode])
 
 	// kilocode_change start
 	const handleManualFix = async () => {
@@ -139,10 +133,10 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 
 		setIsFixing(false)
 	}
-	// kilocode_change end
 
-	// kilocode_change start
-	useEffect(
+	// 2) Debounce the actual parse/render; the LLM is still 'typing', and we do not want to start
+	//.   rendering and/or autofixing before it is fully done. We start the process when we copy originalCode to code
+	useDebounceEffect(
 		() => {
 			if (isFixing) return
 
@@ -185,7 +179,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 					}
 				})
 		},
-		// 1500, // Delay 500ms
+		500, // Delay 500ms
 		[code, isFixing, originalCode, t, isBuffering], // Dependencies for scheduling
 	)
 	// kilocode_change end
