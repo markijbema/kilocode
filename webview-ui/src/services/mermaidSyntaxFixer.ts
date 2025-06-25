@@ -24,6 +24,7 @@ export class MermaidSyntaxFixer {
 	 */
 	static applyDeterministicFixes(code: string): string {
 		// Fix HTML entity encoding: --&gt; should be -->
+		return code
 		return code.replace(/--&gt;/g, "-->")
 	}
 
@@ -46,7 +47,7 @@ export class MermaidSyntaxFixer {
 	/**
 	 * Requests the LLM to fix the Mermaid syntax via the extension
 	 */
-	private static async requestLLMFix(code: string, error: string): Promise<string | null> {
+	private static requestLLMFix(code: string, error: string): Promise<string | null> {
 		return new Promise((resolve, reject) => {
 			const requestId = `mermaid-fix-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
 

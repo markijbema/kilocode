@@ -115,57 +115,59 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 	useDebounceEffect(
 		() => {
 			// kilocode_change next line
-			const renderMermaid = async () => {
-				if (containerRef.current) {
-					containerRef.current.innerHTML = ""
-				}
-
-				return mermaid // kilocode_change
-					.parse(code)
-					.then(() => {
-						const id = `mermaid-${Math.random().toString(36).substring(2)}`
-						return mermaid.render(id, code)
-					})
-					.then(({ svg }) => {
-						if (containerRef.current) {
-							containerRef.current.innerHTML = svg
-						}
-						setError(null) // kilocode_change
-					})
-					.catch((err) => {
-						// kilocode_change start
-						const errorMessage = err instanceof Error ? err.message : t("common:mermaid.render_error")
-						console.warn("Mermaid parse/render failed:", err)
-
-						if (hasAutoFixed || code !== originalCode || isFixing) {
-							setError(errorMessage)
-						} else {
-							// If we haven't tried auto-fixing yet and this is the original code, attempt LLM fix
-							setIsFixing(true)
-
-							// Use a separate async function to handle the fix
-							const attemptFix = async () => {
-								const result = await handleSyntaxFix(code)
-								if (!result.success) {
-									setError(result.error || errorMessage)
-								}
-								setIsFixing(false)
-							}
-
-							return attemptFix()
-						}
-						// kilocode_change end
-					})
-					.finally(() => {
-						// kilocode_change start
-						if (!isFixing) {
-							setIsLoading(false)
-						}
-						// kilocode_change end
-					})
+			if (containerRef.current) {
+				containerRef.current.innerHTML = ""
 			}
 
-			renderMermaid()
+			mermaid // kilocode_change
+				.parse(code)
+				.then(() => {
+					const id = `mermaid-${Math.random().toString(36).substring(2)}`
+					return mermaid.render(id, code)
+				})
+				.then(({ svg }) => {
+					if (containerRef.current) {
+						containerRef.current.innerHTML = svg
+					}
+					setError(null) // kilocode_change
+				})
+				.catch((err) => {
+					// kilocode_change start
+					const errorMessage = err instanceof Error ? err.message : t("common:mermaid.render_error")
+					console.warn("Mermaid parse/render failed:", err)
+
+					if (hasAutoFixed || code !== originalCode || isFixing) {
+						setError(errorMessage)
+					} else {
+						// If we haven't tried auto-fixing yet and this is the original code, attempt LLM fix
+						setIsFixing(true)
+
+						// Use a separate async function to handle the fix
+						const attemptFix = async () => {
+							const result = await MermaidSyntaxFixer.autoFixSyntax(code)
+							if (result.fixedCode) {
+								// Use the improved code even if not completely successful
+								setCurrentCode(result.fixedCode)
+							}
+
+							if (!result.success) {
+								setError(result.error || errorMessage)
+							}
+							setHasAutoFixed(true)
+							setIsFixing(false)
+						}
+
+						return attemptFix()
+					}
+					// kilocode_change end
+				})
+				.finally(() => {
+					// kilocode_change start
+					if (!isFixing) {
+						setIsLoading(false)
+					}
+					// kilocode_change end
+				})
 		},
 		500, // Delay 500ms
 		[code], // Dependencies for scheduling
@@ -192,32 +194,18 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 	}
 
 	// kilocode_change start
-	const handleSyntaxFix = async (codeToFix: string): Promise<{ success: boolean; error?: string }> => {
-		if (isFixing) return { success: false, error: "Already fixing" }
-
-		const fixResult = await MermaidSyntaxFixer.autoFixSyntax(codeToFix)
-
-		if (fixResult.fixedCode) {
-			// Use the improved code even if not completely successful
-			setCurrentCode(fixResult.fixedCode)
-		}
-
-		if (fixResult.success) {
-			setHasAutoFixed(true)
-			return { success: true }
-		}
-
-		const errorMessage = fixResult.error || t("common:mermaid.errors.fix_failed")
-		return { success: false, error: errorMessage }
-	}
-
 	const handleManualFix = async () => {
 		if (isFixing) return
 
 		setIsFixing(true)
 		setError(null)
 
-		const result = await handleSyntaxFix(originalCode)
+		const result = await MermaidSyntaxFixer.autoFixSyntax(code)
+		if (result.fixedCode) {
+			// Use the improved code even if not completely successful
+			setCurrentCode(result.fixedCode)
+		}
+
 		if (!result.success) {
 			setError(result.error || t("common:mermaid.errors.fix_failed"))
 		}
