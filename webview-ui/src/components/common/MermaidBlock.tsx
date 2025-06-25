@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react"
 import mermaid from "mermaid"
 import styled from "styled-components"
+import { useDebounceEffect } from "@/utils/useDebounceEffect"
 import { vscode } from "@src/utils/vscode"
 import { useAppTranslation } from "@src/i18n/TranslationContext"
 import { useCopyToClipboard } from "@src/utils/clipboard"
 import { MermaidSyntaxFixer } from "@src/services/mermaidSyntaxFixer" // kilocode_change
 import CodeBlock from "./CodeBlock"
 import { MermaidButton } from "@/components/common/MermaidButton"
-import { useDebounceEffect } from "@/utils/useDebounceEffect"
 
 // Removed previous attempts at static imports for individual diagram types
 // as the paths were incorrect for Mermaid v11.4.1 and caused errors.
@@ -91,7 +91,6 @@ interface MermaidBlockProps {
 export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const [isLoading, setIsLoading] = useState(false)
-	const [isBuffering, setIsBuffering] = useState(true)
 	const [error, setError] = useState<string | null>(null)
 	const [isErrorExpanded, setIsErrorExpanded] = useState(false)
 	// kilocode_change start
@@ -107,7 +106,6 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 		// kilocode_change start
 		setCode(originalCode)
 		setIsFixing(false)
-		setIsBuffering(false)
 		// kilocode_change end
 	}, [originalCode])
 
@@ -139,8 +137,6 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 	useDebounceEffect(
 		() => {
 			if (isFixing) return
-
-			if (isBuffering) return
 
 			if (containerRef.current) {
 				containerRef.current.innerHTML = ""
@@ -180,7 +176,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 				})
 		},
 		500, // Delay 500ms
-		[code, isFixing, originalCode, t, isBuffering], // Dependencies for scheduling
+		[code, isFixing, originalCode, t], // Dependencies for scheduling
 	)
 	// kilocode_change end
 
