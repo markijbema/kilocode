@@ -111,7 +111,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 	}, [originalCode])
 
 	// kilocode_change start
-	const handleManualFix = async () => {
+	const handleSyntaxFix = async () => {
 		if (isFixing) return
 
 		setIsLoading(true)
@@ -236,7 +236,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 								<FixButton
 									onClick={(e) => {
 										e.stopPropagation()
-										handleManualFix()
+										handleSyntaxFix()
 									}}
 									disabled={isFixing}
 									title={t("common:mermaid.fix_syntax_button")}>
