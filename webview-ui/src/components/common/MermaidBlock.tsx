@@ -114,21 +114,16 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 	const handleManualFix = async () => {
 		if (isFixing) return
 
-		console.info("start fixing")
 		setIsFixing(true)
 		const result = await MermaidSyntaxFixer.autoFixSyntax(code)
 		if (result.fixedCode) {
-			console.info("fixed code", result.fixedCode !== code)
 			// Use the improved code even if not completely successful
 			setCode(result.fixedCode)
 		}
 
 		if (!result.success) {
-			console.info("failed fixing")
 			setError(result.error || t("common:mermaid.errors.fix_failed"))
 		}
-
-		console.info("end fixing")
 
 		setIsFixing(false)
 	}
@@ -146,23 +141,17 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 			mermaid
 				.parse(code)
 				.then(() => {
-					console.info("start of effect")
 					const id = `mermaid-${Math.random().toString(36).substring(2)}`
 					return mermaid.render(id, code)
 				})
 				.then(({ svg }) => {
 					setError(null)
-					console.info("effect success")
+
 					if (containerRef.current) {
-						console.info("actually doing something", [code.length, isFixing, originalCode.length, t])
 						containerRef.current.innerHTML = svg
-					} else {
-						console.info("i am just confusing")
 					}
 				})
 				.catch((err) => {
-					console.info("effect error path, isFixing: " + isFixing)
-					console.info("parameters", [code.length, isFixing, originalCode.length, t])
 					const errorMessage = err instanceof Error ? err.message : t("common:mermaid.render_error")
 					console.warn("Mermaid parse/render failed:", err)
 
