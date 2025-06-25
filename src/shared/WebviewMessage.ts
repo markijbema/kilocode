@@ -192,6 +192,8 @@ export interface WebviewMessage {
 		| "setHistoryPreviewCollapsed"
 		| "showTaskTimeline" // kilocode_change
 		| "toggleTaskFavorite" // kilocode_change
+		| "fixMermaidSyntax" // kilocode_change
+		| "mermaidFixResponse" // kilocode_change
 		| "openExternal"
 		| "filterMarketplaceItems"
 		| "marketplaceButtonClicked"
@@ -204,8 +206,6 @@ export interface WebviewMessage {
 		| "switchTab"
 		| "telemetrySetting"
 		| "profileThresholds"
-		| "fixMermaidSyntax"
-		| "mermaidFixResponse"
 	text?: string
 	tab?: "settings" | "history" | "mcp" | "modes" | "chat" | "marketplace" | "account"
 	disabled?: boolean
