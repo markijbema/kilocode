@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import mermaid from "mermaid"
 import styled from "styled-components"
-import { useDebounceEffect } from "@src/utils/useDebounceEffect"
 import { vscode } from "@src/utils/vscode"
 import { useAppTranslation } from "@src/i18n/TranslationContext"
 import { useCopyToClipboard } from "@src/utils/clipboard"
@@ -95,24 +94,22 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 	const [isErrorExpanded, setIsErrorExpanded] = useState(false)
 	// kilocode_change start
 	const [isFixing, setIsFixing] = useState(false)
-	const [code, setCurrentCode] = useState(originalCode)
+	const [code, setCode] = useState(originalCode)
 	const [hasAutoFixed, setHasAutoFixed] = useState(false)
 	// kilocode_change end
 	const { showCopyFeedback, copyWithFeedback } = useCopyToClipboard()
 	const { t } = useAppTranslation()
 
-	// 1) Whenever `code` changes, mark that we need to re-render a new chart
 	useEffect(() => {
 		setIsLoading(true)
 		setError(null)
 		// kilocode_change start
-		setCurrentCode(originalCode)
+		setCode(originalCode)
 		setHasAutoFixed(false)
 		// kilocode_change end
 	}, [originalCode])
 
-	// 2) Debounce the actual parse/render with LLM-powered fixing
-	useDebounceEffect(
+	useEffect(
 		() => {
 			// kilocode_change next line
 			if (containerRef.current) {
@@ -140,7 +137,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 						setError(errorMessage)
 					} else {
 						setHasAutoFixed(true)
-						handleManualFix()
+						// handleManualFix()
 					}
 					// kilocode_change end
 				})
@@ -152,8 +149,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 					// kilocode_change end
 				})
 		},
-		500, // Delay 500ms
-		[code], // Dependencies for scheduling
+		[code, hasAutoFixed, isFixing, originalCode, t], // Dependencies for scheduling
 	)
 
 	/**
@@ -184,7 +180,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 		const result = await MermaidSyntaxFixer.autoFixSyntax(code)
 		if (result.fixedCode) {
 			// Use the improved code even if not completely successful
-			setCurrentCode(result.fixedCode)
+			setCode(result.fixedCode)
 		}
 
 		if (!result.success) {
