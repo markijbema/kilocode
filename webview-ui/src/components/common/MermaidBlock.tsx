@@ -194,7 +194,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 				</LoadingMessage>
 			)}
 
-			{error && (
+			{error ? (
 				<div style={{ marginTop: "0px", overflow: "hidden", marginBottom: "8px" }}>
 					<div
 						style={{
@@ -274,8 +274,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 						</div>
 					)}
 				</div>
-			)}
-			{
+			) : (
 				<MermaidButton containerRef={containerRef} code={code} isLoading={isLoading} svgToPng={svgToPng}>
 					<SvgContainer
 						onClick={handleClick}
@@ -284,7 +283,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 						dangerouslySetInnerHTML={{ __html: svgContent }}
 					/>
 				</MermaidButton>
-			}
+			)}
 		</MermaidBlockContainer>
 	)
 }
