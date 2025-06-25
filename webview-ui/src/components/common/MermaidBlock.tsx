@@ -141,6 +141,28 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 
 		setIsFixing(false)
 	}, [code, isFixing, t])
+
+	const handleManualFix2 = async () => {
+		if (isFixing) return
+
+		console.info("start fixing")
+		setIsFixing(true)
+		const result = await MermaidSyntaxFixer.autoFixSyntax(code)
+		if (result.fixedCode) {
+			console.info("fixed code", result.fixedCode !== code)
+			// Use the improved code even if not completely successful
+			setCode(result.fixedCode)
+		}
+
+		if (!result.success) {
+			console.info("failed fixing")
+			setError(result.error || t("common:mermaid.errors.fix_failed"))
+		}
+
+		console.info("end fixing")
+
+		setIsFixing(false)
+	}
 	// kilocode_change end
 
 	// kilocode_change start
@@ -270,7 +292,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 								<FixButton
 									onClick={(e) => {
 										e.stopPropagation()
-										handleManualFix()
+										handleManualFix2()
 									}}
 									disabled={isFixing}
 									title={t("common:mermaid.fix_syntax_button")}>

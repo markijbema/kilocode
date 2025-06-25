@@ -98,6 +98,7 @@ export class MermaidSyntaxFixer {
 		let finalError: string | undefined
 
 		while (true) {
+			console.info("attempt ", llmAttempts)
 			currentCode = this.applyDeterministicFixes(currentCode)
 
 			// Validate the current code
@@ -124,9 +125,16 @@ export class MermaidSyntaxFixer {
 			if ("requestError" in result) {
 				finalError = result.requestError
 				break
+			} else if (!result.fixedCode) {
+				finalError = "LLM failed to provide a fix"
+				break
 			} else {
 				currentCode = result.fixedCode
 			}
+		}
+
+		if (finalError) {
+			console.info(finalError)
 		}
 
 		return {
