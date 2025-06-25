@@ -91,6 +91,7 @@ interface MermaidBlockProps {
 export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const [isLoading, setIsLoading] = useState(false)
+	const [isBuffering, setIsBuffering] = useState(true)
 	const [error, setError] = useState<string | null>(null)
 	const [isErrorExpanded, setIsErrorExpanded] = useState(false)
 	// kilocode_change start
@@ -101,30 +102,38 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 	const { showCopyFeedback, copyWithFeedback } = useCopyToClipboard()
 	const { t } = useAppTranslation()
 
-	useEffect(() => {
-		setIsLoading(true)
-		setError(null)
-		// kilocode_change start
-		setCode(originalCode)
-		setIsFixing(false)
-		setHasAutoFixed(false)
-		// kilocode_change end
-	}, [originalCode])
+	// 2) Debounce the actual parse/render; the LLM is still 'typing', and we do not want to start
+	//.   rendering and/or autofixing before it is fully done. We start the process when we copy originalCode to code
+	useDebounceEffect(
+		() => {
+			setIsLoading(true)
+			setError(null)
+			// kilocode_change start
+			setCode(originalCode)
+			setIsFixing(false)
+			setHasAutoFixed(false)
+			setIsBuffering(false)
+			// kilocode_change end
+		},
+		1500,
+		[originalCode],
+	)
 
 	// kilocode_change start
 	const handleManualFix = useCallback(async () => {
 		if (isFixing) return
 
 		console.info("start fixing")
-
 		setIsFixing(true)
 		const result = await MermaidSyntaxFixer.autoFixSyntax(code)
 		if (result.fixedCode) {
+			console.info("fixed code", result.fixedCode !== code)
 			// Use the improved code even if not completely successful
 			setCode(result.fixedCode)
 		}
 
 		if (!result.success) {
+			console.info("failed fixing")
 			setError(result.error || t("common:mermaid.errors.fix_failed"))
 		}
 
@@ -135,13 +144,11 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 	// kilocode_change end
 
 	// kilocode_change start
-	// 2) Debounce the actual parse/render; the LLM is still 'typing', and we do not want to start
-	//.   rendering and/or autofixing before it is fully done
-	useDebounceEffect(
+	useEffect(
 		() => {
-			if (isFixing) {
-				return
-			}
+			if (isFixing) return
+
+			if (isBuffering) return
 
 			if (containerRef.current) {
 				containerRef.current.innerHTML = ""
@@ -158,7 +165,14 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 					setError(null)
 					console.info("effect success")
 					if (containerRef.current) {
-						console.info("actually doing something")
+						console.info("actually doing something", [
+							code.length,
+							hasAutoFixed,
+							isFixing,
+							originalCode.length,
+							t,
+							handleManualFix,
+						])
 						containerRef.current.innerHTML = svg
 					} else {
 						console.info("i am just confusing")
@@ -184,8 +198,8 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 					}
 				})
 		},
-		500, // Delay 500ms
-		[code, hasAutoFixed, isFixing, originalCode, t, handleManualFix], // Dependencies for scheduling
+		// 1500, // Delay 500ms
+		[code, hasAutoFixed, isFixing, originalCode, t, handleManualFix, isBuffering], // Dependencies for scheduling
 	)
 	// kilocode_change end
 
