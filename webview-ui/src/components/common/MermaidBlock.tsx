@@ -292,7 +292,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 								<FixButton
 									onClick={(e) => {
 										e.stopPropagation()
-										handleManualFix2()
+										handleManualFix()
 									}}
 									disabled={isFixing}
 									title={t("common:mermaid.fix_syntax_button")}>
