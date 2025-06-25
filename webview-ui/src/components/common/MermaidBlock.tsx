@@ -114,6 +114,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 	const handleManualFix = async () => {
 		if (isFixing) return
 
+		setIsLoading(true)
 		setIsFixing(true)
 		const result = await MermaidSyntaxFixer.autoFixSyntax(code)
 		if (result.fixedCode) {
@@ -126,6 +127,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 		}
 
 		setIsFixing(false)
+		setIsLoading(false)
 	}
 
 	// 2) Debounce the actual parse/render; the LLM is still 'typing', and we do not want to start
@@ -165,7 +167,6 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 		500, // Delay 500ms
 		[code, isFixing, originalCode, t], // Dependencies for scheduling
 	)
-	// kilocode_change end
 
 	/**
 	 * Called when user clicks the rendered diagram.
@@ -281,18 +282,9 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 				</div>
 			)}
 			{
-				// kilocode_change start : also check isFixing
-				<MermaidButton
-					containerRef={containerRef}
-					code={code}
-					isLoading={isLoading || isFixing}
-					svgToPng={svgToPng}>
-					<SvgContainer
-						onClick={handleClick}
-						ref={containerRef}
-						$isLoading={isLoading || isFixing}></SvgContainer>
+				<MermaidButton containerRef={containerRef} code={code} isLoading={isLoading} svgToPng={svgToPng}>
+					<SvgContainer onClick={handleClick} ref={containerRef} $isLoading={isLoading}></SvgContainer>
 				</MermaidButton>
-				// kilocode_change end
 			}
 		</MermaidBlockContainer>
 	)
