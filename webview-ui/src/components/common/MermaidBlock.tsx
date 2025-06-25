@@ -105,6 +105,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 		setError(null)
 		// kilocode_change start
 		setCode(originalCode)
+		setIsFixing(false)
 		setHasAutoFixed(false)
 		// kilocode_change end
 	}, [originalCode])
@@ -119,6 +120,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 			mermaid // kilocode_change
 				.parse(code)
 				.then(() => {
+					console.info("hello there")
 					const id = `mermaid-${Math.random().toString(36).substring(2)}`
 					return mermaid.render(id, code)
 				})
@@ -234,7 +236,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 						</div>
 						<div style={{ display: "flex", alignItems: "center" }}>
 							{/* kilocode_change start */}
-							{!hasAutoFixed && (
+							{hasAutoFixed && !!error && (
 								<FixButton
 									onClick={(e) => {
 										e.stopPropagation()
