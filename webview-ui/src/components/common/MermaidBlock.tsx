@@ -93,6 +93,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 	const [isLoading, setIsLoading] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 	const [isErrorExpanded, setIsErrorExpanded] = useState(false)
+	const [svgContent, setSvgContent] = useState<string>("")
 	// kilocode_change start
 	const [isFixing, setIsFixing] = useState(false)
 	const [code, setCode] = useState("")
@@ -138,10 +139,6 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 			if (isFixing) return
 			setIsLoading(true)
 
-			if (containerRef.current) {
-				containerRef.current.innerHTML = ""
-			}
-
 			mermaid
 				.parse(code)
 				.then(() => {
@@ -150,10 +147,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 				})
 				.then(({ svg }) => {
 					setError(null)
-
-					if (containerRef.current) {
-						containerRef.current.innerHTML = svg
-					}
+					setSvgContent(svg)
 				})
 				.catch((err) => {
 					console.warn("Mermaid parse/render failed:", err)
@@ -283,7 +277,12 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 			)}
 			{
 				<MermaidButton containerRef={containerRef} code={code} isLoading={isLoading} svgToPng={svgToPng}>
-					<SvgContainer onClick={handleClick} ref={containerRef} $isLoading={isLoading}></SvgContainer>
+					<SvgContainer
+						onClick={handleClick}
+						ref={containerRef}
+						$isLoading={isLoading}
+						dangerouslySetInnerHTML={{ __html: svgContent }}
+					/>
 				</MermaidButton>
 			}
 		</MermaidBlockContainer>
