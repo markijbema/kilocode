@@ -133,6 +133,7 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 	useDebounceEffect(
 		() => {
 			if (isFixing) return
+			setIsLoading(true)
 
 			if (containerRef.current) {
 				containerRef.current.innerHTML = ""
@@ -155,14 +156,10 @@ export default function MermaidBlock({ code: originalCode }: MermaidBlockProps) 
 					const errorMessage = err instanceof Error ? err.message : t("common:mermaid.render_error")
 					console.warn("Mermaid parse/render failed:", err)
 
-					if (!isFixing) {
-						setError(errorMessage)
-					}
+					setError(errorMessage)
 				})
 				.finally(() => {
-					if (!isFixing) {
-						setIsLoading(false)
-					}
+					setIsLoading(false)
 				})
 		},
 		500, // Delay 500ms
