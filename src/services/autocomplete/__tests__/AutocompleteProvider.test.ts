@@ -1,12 +1,30 @@
-// Mock the vscode module
+import * as vscode from "vscode"
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
+import { registerAutocomplete } from "../AutocompleteProvider"
+import { ContextProxy } from "../../../core/config/ContextProxy"
+
+// Mock vscode module with all required functions for both test suites
 vi.mock("vscode", () => ({
 	window: {
 		createTextEditorDecorationType: vi.fn().mockReturnValue({ dispose: vi.fn() }),
+		createStatusBarItem: vi.fn(() => ({
+			text: "",
+			tooltip: "",
+			command: "",
+			show: vi.fn(),
+			dispose: vi.fn(),
+		})),
+		showInformationMessage: vi.fn(),
 		activeTextEditor: {
 			selection: { active: {} },
 			edit: vi.fn().mockImplementation(() => Promise.resolve(true)),
 			setDecorations: vi.fn(),
+			document: {
+				lineAt: vi.fn(),
+				getText: vi.fn(),
+			},
 		},
+		onDidChangeTextEditorSelection: vi.fn(() => ({ dispose: vi.fn() })),
 	},
 	commands: {
 		executeCommand: vi.fn(),
@@ -17,24 +35,19 @@ vi.mock("vscode", () => ({
 			return { dispose: vi.fn() }
 		}),
 	},
-	Range: class {
-		constructor(
-			public start: any,
-			public end: any,
-		) {}
+	languages: {
+		registerInlineCompletionItemProvider: vi.fn(),
 	},
-	ThemeColor: class {
-		constructor(public id: string) {}
-	},
-	DecorationRangeBehavior: { ClosedOpen: 1 },
-	StatusBarAlignment: { Right: 1 },
 	workspace: {
 		getConfiguration: vi.fn().mockReturnValue({ get: vi.fn() }),
 		onDidChangeConfiguration: vi.fn().mockReturnValue({ dispose: vi.fn() }),
 		onDidChangeTextDocument: vi.fn().mockReturnValue({ dispose: vi.fn() }),
 	},
-	languages: {
-		registerInlineCompletionItemProvider: vi.fn(),
+	Range: class {
+		constructor(
+			public start: any,
+			public end: any,
+		) {}
 	},
 	Position: class {
 		constructor(
@@ -48,6 +61,82 @@ vi.mock("vscode", () => ({
 			public range: any,
 		) {}
 	},
+	ThemeColor: class {
+		constructor(public id: string) {}
+	},
+	DecorationRangeBehavior: { ClosedOpen: 1 },
+	StatusBarAlignment: { Right: 2 },
+	Disposable: class {
+		constructor(public dispose: () => void) {}
+	},
+	CancellationTokenSource: class {
+		constructor() {
+			this.token = { isCancellationRequested: false }
+		}
+		token: { isCancellationRequested: boolean }
+		cancel() {}
+		dispose() {}
+	},
+	CancellationError: class extends Error {
+		constructor() {
+			super("The operation was canceled")
+			this.name = "CancellationError"
+		}
+	},
+	TextDocumentChangeReason: {
+		Undo: 1,
+		Redo: 2,
+	},
+}))
+
+// Mock other dependencies needed for whitespace tests
+vi.mock("../../../core/config/ContextProxy", () => ({
+	ContextProxy: {
+		instance: {
+			getGlobalState: vi.fn(),
+			getProviderSettings: vi.fn(() => ({ kilocodeToken: "test-token" })),
+		},
+	},
+}))
+
+vi.mock("../../../api", () => ({
+	buildApiHandler: vi.fn(() => ({
+		createMessage: vi.fn(),
+		getModel: vi.fn(() => ({
+			id: "test-model",
+			info: {
+				contextWindow: 100000,
+				supportsPromptCache: false,
+				maxTokens: 4096,
+			},
+		})),
+		countTokens: vi.fn(() => Promise.resolve(100)),
+	})),
+}))
+
+vi.mock("../ContextGatherer", () => ({
+	ContextGatherer: vi.fn().mockImplementation(() => ({
+		gatherContext: vi.fn().mockResolvedValue({
+			precedingLines: ["line1", "line2"],
+			followingLines: ["line3", "line4"],
+			imports: [],
+			definitions: [],
+		}),
+	})),
+}))
+
+vi.mock("../AutocompleteDecorationAnimation", () => ({
+	AutocompleteDecorationAnimation: {
+		getInstance: vi.fn(() => ({
+			startAnimation: vi.fn(),
+			stopAnimation: vi.fn(),
+			dispose: vi.fn(),
+		})),
+	},
+}))
+
+vi.mock("../utils/EditDetectionUtils", () => ({
+	isHumanEdit: vi.fn(() => true),
 }))
 
 // Create a mock class that simulates the behavior we want to test
@@ -212,62 +301,6 @@ describe("Two-stage completion acceptance", () => {
 		expect(provider.hasAcceptedFirstLine).toBe(false)
 	})
 })
-
-// Add the new tests for whitespace handling with minimal changes
-import * as vscode from "vscode"
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { registerAutocomplete } from "../AutocompleteProvider"
-import { ContextProxy } from "../../../core/config/ContextProxy"
-
-// Additional mocks needed for whitespace tests
-vi.mock("../../../core/config/ContextProxy", () => ({
-	ContextProxy: {
-		instance: {
-			getGlobalState: vi.fn(),
-			getProviderSettings: vi.fn(() => ({ kilocodeToken: "test-token" })),
-		},
-	},
-}))
-
-vi.mock("../../../api", () => ({
-	buildApiHandler: vi.fn(() => ({
-		createMessage: vi.fn(),
-		getModel: vi.fn(() => ({
-			id: "test-model",
-			info: {
-				contextWindow: 100000,
-				supportsPromptCache: false,
-				maxTokens: 4096,
-			},
-		})),
-		countTokens: vi.fn(() => Promise.resolve(100)),
-	})),
-}))
-
-vi.mock("../ContextGatherer", () => ({
-	ContextGatherer: vi.fn().mockImplementation(() => ({
-		gatherContext: vi.fn().mockResolvedValue({
-			precedingLines: ["line1", "line2"],
-			followingLines: ["line3", "line4"],
-			imports: [],
-			definitions: [],
-		}),
-	})),
-}))
-
-vi.mock("../AutocompleteDecorationAnimation", () => ({
-	AutocompleteDecorationAnimation: {
-		getInstance: vi.fn(() => ({
-			startAnimation: vi.fn(),
-			stopAnimation: vi.fn(),
-			dispose: vi.fn(),
-		})),
-	},
-}))
-
-vi.mock("../utils/EditDetectionUtils", () => ({
-	isHumanEdit: vi.fn(() => true),
-}))
 
 describe("AutocompleteProvider whitespace handling", () => {
 	let mockContext: any
