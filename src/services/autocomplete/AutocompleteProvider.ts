@@ -210,6 +210,16 @@ function setupAutocomplete(context: vscode.ExtensionContext): vscode.Disposable 
 				return null
 			}
 
+			// Check if we're at the start of a line with only whitespace before cursor
+			const lineText = document.lineAt(position.line).text
+			const textBeforeCursor = lineText.substring(0, position.character)
+
+			// If we're in whitespace at the start of a line (e.g., indenting with tab), don't trigger autocomplete
+			if (textBeforeCursor.trim() === "") {
+				console.log(`🚀⚪ Skipping autocomplete in whitespace at start of line`)
+				return null
+			}
+
 			// Get exactly what's been typed on the current line
 			const linePrefix = document
 				.getText(new vscode.Range(new vscode.Position(position.line, 0), position))
