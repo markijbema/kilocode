@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { registerAutocomplete } from "../AutocompleteProvider"
 import { ContextProxy } from "../../../core/config/ContextProxy"
 
-// Mock vscode module with all required functions for both test suites
+// Mock vscode module
 vi.mock("vscode", () => ({
 	window: {
 		createTextEditorDecorationType: vi.fn().mockReturnValue({ dispose: vi.fn() }),
