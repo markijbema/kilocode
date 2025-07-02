@@ -215,7 +215,8 @@ function setupAutocomplete(context: vscode.ExtensionContext): vscode.Disposable 
 			const textBeforeCursor = lineText.substring(0, position.character)
 
 			// If we're in whitespace at the start of a line (e.g., indenting with tab), don't trigger autocomplete
-			if (textBeforeCursor.trim() === "") {
+			// But allow autocomplete if we're at the end of a line that consists only of whitespace
+			if (textBeforeCursor.trim() === "" && position.character !== lineText.length) {
 				console.log(`🚀⚪ Skipping autocomplete in whitespace at start of line`)
 				return null
 			}

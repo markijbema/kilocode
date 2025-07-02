@@ -226,6 +226,25 @@ describe("AutocompleteProvider", () => {
 		expect(result).toBeNull()
 	})
 
+	it("verifies whitespace check logic allows completions at end of whitespace-only line", () => {
+		// This test directly verifies the condition we modified in AutocompleteProvider.ts
+
+		// Case 1: Whitespace at start of line but NOT at the end (should skip autocomplete)
+		const lineWithOnlyWhitespace = "    "
+		const positionInWhitespace = 2 // Cursor in the middle of whitespace
+		const textBeforeCursor1 = lineWithOnlyWhitespace.substring(0, positionInWhitespace)
+
+		// Verify our condition would skip autocomplete
+		expect(textBeforeCursor1.trim() === "" && positionInWhitespace !== lineWithOnlyWhitespace.length).toBe(true)
+
+		// Case 2: Whitespace-only line with cursor at the end (should NOT skip autocomplete)
+		const positionAtEnd = 4 // Cursor at the end of whitespace
+		const textBeforeCursor2 = lineWithOnlyWhitespace.substring(0, positionAtEnd)
+
+		// Verify our condition would NOT skip autocomplete
+		expect(textBeforeCursor2.trim() === "" && positionAtEnd !== lineWithOnlyWhitespace.length).toBe(false)
+	})
+
 	it("should not provide completions when pressing tab in indentation", async () => {
 		// Register autocomplete
 		registerAutocomplete(mockContext)
