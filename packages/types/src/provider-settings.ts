@@ -19,7 +19,6 @@ export const providerNames = [
 	"vscode-lm",
 	"lmstudio",
 	"gemini",
-	"gemini-cli",
 	"openai-native",
 	"mistral",
 	"deepseek",
